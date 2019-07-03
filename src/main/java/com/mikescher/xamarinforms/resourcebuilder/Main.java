@@ -1,5 +1,9 @@
 package com.mikescher.xamarinforms.resourcebuilder;
 
+import org.apache.batik.transcoder.TranscoderInput;
+import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.image.PNGTranscoder;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -83,12 +87,32 @@ public class Main {
         }
     }
 
-    private static void outputRasterImage(String input, String output, int ww, int hh)
+    private static void outputRasterImage(String input, String output, int ww, int hh) throws Exception
     {
-        File f_in = new File(input);
-        File f_out = new File(output);
+        File f_tmp = File.createTempFile("xfrb_2_", ".png");
+        f_tmp.deleteOnExit();
+        File f_out = Paths.get(output).toFile();
 
-        System.out.println("[ ] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
+        PNGTranscoder t = new PNGTranscoder();
+        t.addTranscodingHint(PNGTranscoder.KEY_WIDTH, (float) ww);
+        t.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, (float) hh);
+        TranscoderInput tcinput = new TranscoderInput(new FileInputStream(input));
+        OutputStream ostream = new FileOutputStream(f_tmp);
+        TranscoderOutput tcoutput = new TranscoderOutput(ostream);
+        t.transcode(tcinput, tcoutput);
+        ostream.flush();
+
+        String xold = f_out.exists() ? cs(f_out) : "";
+        String xnew = cs(f_tmp);
+
+        if (xold.equals(xnew)) {
+            f_tmp.delete();
+            System.out.println("[ ] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
+        } else {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
+        }
     }
 
     private static void outputAndroidVector(String input, String output, String ww, String hh) throws Exception {
@@ -184,5 +208,11 @@ public class Main {
         } finally {
             if (bw != null) bw.close();
         }
+    }
+
+    private static String cs(File f) throws IOException {
+        String checksum;
+        try (FileInputStream fis = new FileInputStream(f)) { checksum = DigestUtils.sha256Hex(fis).toUpperCase(); }
+        return checksum;
     }
 }
