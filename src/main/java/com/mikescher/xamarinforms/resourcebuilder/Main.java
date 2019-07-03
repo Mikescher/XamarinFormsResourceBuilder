@@ -106,7 +106,13 @@ public class Main {
         String xold = f_out.exists() ? cs(f_out) : "";
         String xnew = cs(f_tmp);
 
-        if (xold.equals(xnew)) {
+        if (xnew.isEmpty()) {
+            throw new Exception("Conversion resulted in empty file");
+        } else if (xold.isEmpty()) {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File created");
+        } else if (xold.equals(xnew)) {
             f_tmp.delete();
             System.out.println("[ ] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
         } else {
@@ -132,7 +138,14 @@ public class Main {
         String xold = f_out.exists() ? readUTF8TextFile(f_out) : "";
         String xnew = readUTF8TextFile(f_tmp_file);
 
-        if (xold.equals(xnew)) {
+        if (xnew.isEmpty()) {
+            throw new Exception("Conversion resulted in empty file");
+        } else if (xold.isEmpty()) {
+            f_out.delete();
+            f_tmp_file.renameTo(f_out);
+            f_tmp_dir.delete();
+            System.out.println("[!] " + StringUtils.rightPad("XML @ ("+ww+")x("+hh+")", 24) + "  --  File created");
+        } else if (xold.equals(xnew)) {
             f_tmp_file.delete();
             f_tmp_dir.delete();
             System.out.println("[ ] " + StringUtils.rightPad("XML @ ("+ww+")x("+hh+")", 24) + "  --  No changes");
@@ -146,9 +159,12 @@ public class Main {
 
     private static void outputVectorPDF(String input, String output) throws Exception
     {
-        File f_tmp = File.createTempFile("xfrb_3_", ".png");
+        File f_tmp = File.createTempFile("xfrb_3_", ".pdf");
         f_tmp.deleteOnExit();
         File f_out = Paths.get(output).toFile();
+        File f_in = new File(input);
+
+        if (f_out.exists() && f_out.lastModified() >= f_in.lastModified()) return;
 
         PDFTranscoder t = new PDFTranscoder();
         TranscoderInput tcinput = new TranscoderInput(new FileInputStream(input));
@@ -156,17 +172,16 @@ public class Main {
         TranscoderOutput tcoutput = new TranscoderOutput(ostream);
         t.transcode(tcinput, tcoutput);
         ostream.flush();
+        ostream.close();
 
-        String xold = f_out.exists() ? cs(f_out) : "";
-        String xnew = cs(f_tmp);
-
-        if (xold.equals(xnew)) {
-            f_tmp.delete();
-            System.out.println("[ ] " + StringUtils.rightPad("PDF", 24) + "  --  No changes");
-        } else {
+        if (f_out.exists()) {
             new File(output).delete();
             f_tmp.renameTo(new File(output));
             System.out.println("[!] " + StringUtils.rightPad("PDF", 24) + "  --  File changed");
+        } else {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("PDF", 24) + "  --  File created");
         }
     }
 
