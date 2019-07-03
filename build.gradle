@@ -4,9 +4,13 @@ plugins {
 }
 
 group 'com.mikescher'
-version '1.0-SNAPSHOT'
+version '1.0'
 
 sourceCompatibility = 1.8
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'application'
 
 repositories {
     mavenCentral()
@@ -31,4 +35,14 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.mikescher.xamarinforms.resourcebuilder.Main'
+    }
+    destinationDir = file("$rootDir/mybuilds")
+    baseName = 'XFResBuilder'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }

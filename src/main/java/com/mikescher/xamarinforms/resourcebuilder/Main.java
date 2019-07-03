@@ -41,7 +41,7 @@ public class Main {
 
         Element root = doc.getDocumentElement();
 
-        String dir = fXmlFile.getParent();
+        String dir = fXmlFile.getAbsoluteFile().getParent();
         String outroot = root.getAttribute("outputroot");
 
         vdt = System.getProperty("os.name").toLowerCase().contains("win")
