@@ -5,6 +5,7 @@ import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.fop.svg.PDFTranscoder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -143,12 +144,30 @@ public class Main {
         }
     }
 
-    private static void outputVectorPDF(String input, String output)
+    private static void outputVectorPDF(String input, String output) throws Exception
     {
-        File f_in = new File(input);
-        File f_out = new File(output);
+        File f_tmp = File.createTempFile("xfrb_3_", ".png");
+        f_tmp.deleteOnExit();
+        File f_out = Paths.get(output).toFile();
 
-        System.out.println("[ ] " + StringUtils.rightPad("PDF", 24) + "  --  No changes");
+        PDFTranscoder t = new PDFTranscoder();
+        TranscoderInput tcinput = new TranscoderInput(new FileInputStream(input));
+        OutputStream ostream = new FileOutputStream(f_tmp);
+        TranscoderOutput tcoutput = new TranscoderOutput(ostream);
+        t.transcode(tcinput, tcoutput);
+        ostream.flush();
+
+        String xold = f_out.exists() ? cs(f_out) : "";
+        String xnew = cs(f_tmp);
+
+        if (xold.equals(xnew)) {
+            f_tmp.delete();
+            System.out.println("[ ] " + StringUtils.rightPad("PDF", 24) + "  --  No changes");
+        } else {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("PDF", 24) + "  --  File changed");
+        }
     }
 
     public static String readUTF8TextFile(File file) throws IOException {
