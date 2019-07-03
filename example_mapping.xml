@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mappings outputroot="../../Source" vd-tool-win="vd-tool/bin/vd-tool.bat" vd-tool-nix="vd-tool/bin/vd-tool" >
+
+	<file path="ic_date.svg">
+		<output path="app.Android/Resources/drawable/ic_date.xml" vector_width="24dp" vector_height="24dp" />
+		<output path="app.iOS/Assets.xcassets/ic_date.imageset/img_1x.png" width="30" height="30" />
+		<output path="app.iOS/Assets.xcassets/ic_date.imageset/img_2x.png" width="60" height="60" />
+		<output path="app.iOS/Assets.xcassets/ic_date.imageset/img_3x.png" width="90" height="90" />
+		<output path="app.iOS/Assets.xcassets/ic_date.imageset/img_vec.pdf" />
+	</file>
+	
+	<file path="ic_interests.svg">
+		<output path="app.Android/Resources/drawable/ic_interests.xml" vector_width="24dp" vector_height="24dp" />
+		<output path="app.iOS/Assets.xcassets/ic_interests.imageset/img_1x.png" width="30" height="30" />
+		<output path="app.iOS/Assets.xcassets/ic_interests.imageset/img_2x.png" width="60" height="60" />
+		<output path="app.iOS/Assets.xcassets/ic_interests.imageset/img_3x.png" width="90" height="90" />
+		<output path="app.iOS/Assets.xcassets/ic_interests.imageset/img_vec.pdf" />
+	</file>
+	
+	<file path="ic_location.svg">
+		<output path="app.Android/Resources/drawable/ic_location.xml" vector_width="24dp" vector_height="24dp" />
+		<output path="app.iOS/Assets.xcassets/ic_location.imageset/img_1x.png" width="30" height="30" />
+		<output path="app.iOS/Assets.xcassets/ic_location.imageset/img_2x.png" width="60" height="60" />
+		<output path="app.iOS/Assets.xcassets/ic_location.imageset/img_3x.png" width="90" height="90" />
+		<output path="app.iOS/Assets.xcassets/ic_location.imageset/img_vec.pdf" />
+	</file>
+
+</mappings>
