@@ -77,7 +77,7 @@ public class Main {
 
         if (filepath.endsWith(".svg"))
             runFromSVG(filepath, outputNode, outputpath);
-        else if (filepath.endsWith(".png") || outputpath.endsWith(".jpg") || outputpath.endsWith(".bmp"))
+        else if (filepath.endsWith(".png") || outputpath.endsWith(".jpg") || outputpath.endsWith(".jpeg") || outputpath.endsWith(".bmp"))
             runFromImage(filepath, outputNode, outputpath);
         else
             throw new Exception("Unsupported file extension for " + filepath);
@@ -93,7 +93,7 @@ public class Main {
         if (outputpath.endsWith(".png")) {
             String strww = outputNode.getAttribute("width");
             String strhh = outputNode.getAttribute("height");
-            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("height")) {
+            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
                 strww = "" + getWidthFromPNG(filepath);
                 strhh = "" + getHeightFromPNG(filepath);
             } else if (strww.equalsIgnoreCase("auto")) {
@@ -108,6 +108,25 @@ public class Main {
             outputpath = outputpath.replace("{height}", ""+hh);
 
             outputRasterImageFromImage(filepath, outputpath, ww, hh);
+
+        } else if (outputpath.endsWith(".jpg") || outputpath.endsWith(".jpeg")) {
+            String strww = outputNode.getAttribute("width");
+            String strhh = outputNode.getAttribute("height");
+            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
+                strww = "" + getWidthFromPNG(filepath);
+                strhh = "" + getHeightFromPNG(filepath);
+            } else if (strww.equalsIgnoreCase("auto")) {
+                strww = "" + calcAutoWidthFromPNG(filepath, Integer.parseInt(strhh));
+            } else if (strhh.equalsIgnoreCase("auto")) {
+                strhh = "" + calcAutoHeightFromPNG(filepath, Integer.parseInt(strww));
+            }
+            int ww = Integer.parseInt(strww);
+            int hh = Integer.parseInt(strhh);
+
+            outputpath = outputpath.replace("{width}", ""+ww);
+            outputpath = outputpath.replace("{height}", ""+hh);
+
+            outputJPEGFromImage(filepath, outputpath, ww, hh);
 
         } else {
 
@@ -124,7 +143,7 @@ public class Main {
         if (outputpath.endsWith(".png")) {
             String strww = outputNode.getAttribute("width");
             String strhh = outputNode.getAttribute("height");
-            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("height")) {
+            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
                 strww = "" + getRoundedWidthFromSVG(filepath);
                 strhh = "" + getRoundedHeightFromSVG(filepath);
             } else if (strww.equalsIgnoreCase("auto")) {
@@ -172,9 +191,14 @@ public class Main {
 
         BufferedImage img = ImageIO.read(new File(input));
 
-        ResampleOp resizeOp = new ResampleOp(ww, hh);
-        resizeOp.setFilter(ResampleFilters.getLanczos3Filter());
-        BufferedImage scaledImage = resizeOp.filter(img, null);
+        BufferedImage scaledImage;
+        if (ww == getWidthFromPNG(input) && hh == getHeightFromPNG(input)) {
+            scaledImage = img;
+        } else {
+            ResampleOp resizeOp = new ResampleOp(ww, hh);
+            resizeOp.setFilter(ResampleFilters.getLanczos3Filter());
+            scaledImage = resizeOp.filter(img, null);
+        }
 
         ImageIO.write(scaledImage, "PNG", f_tmp);
 
@@ -194,6 +218,44 @@ public class Main {
             new File(output).delete();
             f_tmp.renameTo(new File(output));
             System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
+        }
+    }
+
+    private static void outputJPEGFromImage(String input, String output, int ww, int hh) throws Exception
+    {
+        File f_tmp = File.createTempFile("xfrb_2_", ".jpeg");
+        f_tmp.deleteOnExit();
+        File f_out = Paths.get(output).toFile();
+
+        BufferedImage img = ImageIO.read(new File(input));
+
+        BufferedImage scaledImage;
+        if (ww == getWidthFromPNG(input) && hh == getHeightFromPNG(input)) {
+            scaledImage = img;
+        } else {
+            ResampleOp resizeOp = new ResampleOp(ww, hh);
+            resizeOp.setFilter(ResampleFilters.getLanczos3Filter());
+            scaledImage = resizeOp.filter(img, null);
+        }
+
+        ImageIO.write(scaledImage, "JPG", f_tmp);
+
+        String xold = f_out.exists() ? cs(f_out) : "";
+        String xnew = cs(f_tmp);
+
+        if (xnew.isEmpty()) {
+            throw new Exception("Conversion resulted in empty file");
+        } else if (xold.isEmpty()) {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24) + "  --  File created");
+        } else if (xold.equals(xnew)) {
+            f_tmp.delete();
+            System.out.println("[ ] " + StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
+        } else {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
         }
     }
 
