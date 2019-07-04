@@ -77,14 +77,14 @@ public class Main {
 
         if (filepath.endsWith(".svg"))
             runFromSVG(filepath, outputNode, outputpath);
-        else if (filepath.endsWith(".png"))
-            runFromPNG(filepath, outputNode, outputpath);
+        else if (filepath.endsWith(".png") || outputpath.endsWith(".jpg") || outputpath.endsWith(".bmp"))
+            runFromImage(filepath, outputNode, outputpath);
         else
             throw new Exception("Unsupported file extension for " + filepath);
 
     }
 
-    private static void runFromPNG(String filepath, Element outputNode, String outputpath) throws Exception
+    private static void runFromImage(String filepath, Element outputNode, String outputpath) throws Exception
     {
         outputpath = outputpath.replace("{filename}", new File(outputpath).getName());
         outputpath = outputpath.replace("{originalwidth}",  "" + getWidthFromPNG(filepath));
@@ -107,7 +107,7 @@ public class Main {
             outputpath = outputpath.replace("{width}", ""+ww);
             outputpath = outputpath.replace("{height}", ""+hh);
 
-            outputRasterImageFromPNG(filepath, outputpath, ww, hh);
+            outputRasterImageFromImage(filepath, outputpath, ww, hh);
 
         } else {
 
@@ -164,7 +164,7 @@ public class Main {
         }
     }
 
-    private static void outputRasterImageFromPNG(String input, String output, int ww, int hh) throws Exception
+    private static void outputRasterImageFromImage(String input, String output, int ww, int hh) throws Exception
     {
         File f_tmp = File.createTempFile("xfrb_2_", ".png");
         f_tmp.deleteOnExit();
