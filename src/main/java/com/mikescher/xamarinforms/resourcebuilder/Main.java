@@ -1,28 +1,30 @@
 package com.mikescher.xamarinforms.resourcebuilder;
 
+import com.mortennobel.imagescaling.ResampleFilters;
+import com.mortennobel.imagescaling.ResampleOp;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fop.svg.PDFTranscoder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import static com.mikescher.xamarinforms.resourcebuilder.FileIO.*;
+import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.*;
+import static com.mikescher.xamarinforms.resourcebuilder.PNGUtil.*;
+
 public class Main {
-    public final static Charset CHARSET_UTF8 = StandardCharsets.UTF_8; //$NON-NLS-1$
-
-    public final static String LINE_END = System.getProperty("line.separator"); //$NON-NLS-1$
-
     private static String vdt;
 
     public static void main(String[] args) throws Exception
@@ -63,32 +65,139 @@ public class Main {
                 Element outputNode = (Element)outputNodes.item(j);
                 String outputpath = Paths.get(dir, outroot, outputNode.getAttribute("path")).toAbsolutePath().toString() ;
 
-                if (outputpath.endsWith(".png")) {
-                    int ww = Integer.parseInt(outputNode.getAttribute("width"));
-                    int hh = Integer.parseInt(outputNode.getAttribute("height"));
-                    outputRasterImage(filepath, outputpath, ww, hh);
-
-                } else if (outputpath.endsWith(".xml")) {
-                    String ww = outputNode.getAttribute("vector_width");
-                    String hh = outputNode.getAttribute("vector_height");
-                    outputAndroidVector(filepath, outputpath, ww, hh);
-
-                } else if (outputpath.endsWith(".pdf")) {
-
-                    outputVectorPDF(filepath, outputpath);
-
-                } else {
-
-                    throw new Exception("Unsupported file extension for " + outputpath);
-
-                }
+                run(filepath, outputNode, outputpath);
             }
 
             System.out.println();
         }
     }
 
-    private static void outputRasterImage(String input, String output, int ww, int hh) throws Exception
+    private static void run(String filepath, Element outputNode, String outputpath) throws Exception
+    {
+
+        if (filepath.endsWith(".svg"))
+            runFromSVG(filepath, outputNode, outputpath);
+        else if (filepath.endsWith(".png"))
+            runFromPNG(filepath, outputNode, outputpath);
+        else
+            throw new Exception("Unsupported file extension for " + filepath);
+
+    }
+
+    private static void runFromPNG(String filepath, Element outputNode, String outputpath) throws Exception
+    {
+        outputpath = outputpath.replace("{filename}", new File(outputpath).getName());
+        outputpath = outputpath.replace("{originalwidth}",  "" + getWidthFromPNG(filepath));
+        outputpath = outputpath.replace("{originalheight}", "" + getHeightFromPNG(filepath));
+
+        if (outputpath.endsWith(".png")) {
+            String strww = outputNode.getAttribute("width");
+            String strhh = outputNode.getAttribute("height");
+            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("height")) {
+                strww = "" + getWidthFromPNG(filepath);
+                strhh = "" + getHeightFromPNG(filepath);
+            } else if (strww.equalsIgnoreCase("auto")) {
+                strww = "" + calcAutoWidthFromPNG(filepath, Integer.parseInt(strhh));
+            } else if (strhh.equalsIgnoreCase("auto")) {
+                strhh = "" + calcAutoHeightFromPNG(filepath, Integer.parseInt(strww));
+            }
+            int ww = Integer.parseInt(strww);
+            int hh = Integer.parseInt(strhh);
+
+            outputpath = outputpath.replace("{width}", ""+ww);
+            outputpath = outputpath.replace("{height}", ""+hh);
+
+            outputRasterImageFromPNG(filepath, outputpath, ww, hh);
+
+        } else {
+
+            throw new Exception("Unsupported file extension for " + outputpath);
+
+        }
+    }
+
+    private static void runFromSVG(String filepath, Element outputNode, String outputpath) throws Exception {
+        outputpath = outputpath.replace("{filename}", new File(outputpath).getName());
+        outputpath = outputpath.replace("{originalwidth}",  "" + getRoundedWidthFromSVG(filepath));
+        outputpath = outputpath.replace("{originalheight}", "" + getRoundedHeightFromSVG(filepath));
+
+        if (outputpath.endsWith(".png")) {
+            String strww = outputNode.getAttribute("width");
+            String strhh = outputNode.getAttribute("height");
+            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("height")) {
+                strww = "" + getRoundedWidthFromSVG(filepath);
+                strhh = "" + getRoundedHeightFromSVG(filepath);
+            } else if (strww.equalsIgnoreCase("auto")) {
+                strww = "" + calcAutoWidthFromSVG(filepath, Integer.parseInt(strhh));
+            } else if (strhh.equalsIgnoreCase("auto")) {
+                strhh = "" + calcAutoHeightFromSVG(filepath, Integer.parseInt(strww));
+            }
+            int ww = Integer.parseInt(strww);
+            int hh = Integer.parseInt(strhh);
+
+            outputpath = outputpath.replace("{width}", ""+ww);
+            outputpath = outputpath.replace("{height}", ""+hh);
+
+            outputRasterImageFromSVG(filepath, outputpath, ww, hh);
+
+        } else if (outputpath.endsWith(".xml")) {
+            String strww = outputNode.getAttribute("vector_width");
+            String strhh = outputNode.getAttribute("vector_height");
+            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
+                strww = getRoundedWidthFromSVG(filepath) + "dp";
+                strhh = getRoundedHeightFromSVG(filepath) + "dp";
+            } else if (strww.equalsIgnoreCase("auto")) {
+                strww = "" + calcAutoWidthFromSVG(filepath, Integer.parseInt(un_dp(strhh))) + "dp";
+            } else if (strhh.equalsIgnoreCase("auto")) {
+                strww = "" + calcAutoHeightFromSVG(filepath, Integer.parseInt(un_dp(strhh))) + "dp";
+            }
+            outputAndroidVectorFromSVG(filepath, outputpath, strww, strhh);
+
+        } else if (outputpath.endsWith(".pdf")) {
+
+            outputVectorPDFFromSVG(filepath, outputpath);
+
+        } else {
+
+            throw new Exception("Unsupported file extension for " + outputpath);
+
+        }
+    }
+
+    private static void outputRasterImageFromPNG(String input, String output, int ww, int hh) throws Exception
+    {
+        File f_tmp = File.createTempFile("xfrb_2_", ".png");
+        f_tmp.deleteOnExit();
+        File f_out = Paths.get(output).toFile();
+
+        BufferedImage img = ImageIO.read(new File(input));
+
+        ResampleOp resizeOp = new ResampleOp(ww, hh);
+        resizeOp.setFilter(ResampleFilters.getLanczos3Filter());
+        BufferedImage scaledImage = resizeOp.filter(img, null);
+
+        ImageIO.write(scaledImage, "PNG", f_tmp);
+
+        String xold = f_out.exists() ? cs(f_out) : "";
+        String xnew = cs(f_tmp);
+
+        if (xnew.isEmpty()) {
+            throw new Exception("Conversion resulted in empty file");
+        } else if (xold.isEmpty()) {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File created");
+        } else if (xold.equals(xnew)) {
+            f_tmp.delete();
+            System.out.println("[ ] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
+        } else {
+            new File(output).delete();
+            f_tmp.renameTo(new File(output));
+            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
+        }
+    }
+
+    private static void outputRasterImageFromSVG(String input, String output, int ww, int hh) throws Exception
     {
         File f_tmp = File.createTempFile("xfrb_2_", ".png");
         f_tmp.deleteOnExit();
@@ -122,7 +231,8 @@ public class Main {
         }
     }
 
-    private static void outputAndroidVector(String input, String output, String ww, String hh) throws Exception {
+    private static void outputAndroidVectorFromSVG(String input, String output, String ww, String hh) throws Exception
+    {
         File f_in = new File(input);
         File f_out = Paths.get(output).toFile();
         File f_tmp_dir = Paths.get(System.getProperty("java.io.tmpdir"), "xfrb_" + UUID.randomUUID()).toFile();
@@ -131,7 +241,7 @@ public class Main {
         File f_tmp_file = Paths.get(f_tmp_dir.getAbsolutePath(), f_in.getName().replace(".svg", ".xml")).toFile();
         f_tmp_file.deleteOnExit();
 
-        Tuple3<Integer, String, String> r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c", "-widthDp", ww.replace("dp", ""), "-heightDp", hh.replace("dp", ""));
+        Tuple3<Integer, String, String> r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c", "-widthDp", un_dp(ww), "-heightDp", un_dp(hh));
 
         if (r.Item1 != 0)  throw new Exception("vd-tool failed: \n\n" + r.Item1 + "\n\n" + r.Item2 + "\n\n" + r.Item3);
 
@@ -157,7 +267,7 @@ public class Main {
         }
     }
 
-    private static void outputVectorPDF(String input, String output) throws Exception
+    private static void outputVectorPDFFromSVG(String input, String output) throws Exception
     {
         File f_tmp = File.createTempFile("xfrb_3_", ".pdf");
         f_tmp.deleteOnExit();
@@ -183,70 +293,5 @@ public class Main {
             f_tmp.renameTo(new File(output));
             System.out.println("[!] " + StringUtils.rightPad("PDF", 24) + "  --  File created");
         }
-    }
-
-    public static String readUTF8TextFile(File file) throws IOException {
-        FileInputStream stream;
-        String result = readUTF8TextFile(stream = new FileInputStream(file));
-        stream.close();
-        return result;
-    }
-
-    public static String readUTF8TextFile(FileInputStream file) throws IOException {
-        return readTextFile(new InputStreamReader(file, CHARSET_UTF8));
-    }
-
-    public static String readTextFile(InputStreamReader reader) throws IOException {
-        return readTextFile(new BufferedReader(reader));
-    }
-
-    public static String readTextFile(BufferedReader reader) throws IOException {
-        StringBuilder content = new StringBuilder();
-        boolean first = true;
-
-        try {
-            String s;
-
-            while ((s = reader.readLine()) != null) {
-                if (!first) {
-                    content.append(LINE_END);
-                }
-                content.append(s);
-                first = false;
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        return content.toString();
-    }
-
-    public static void writeTextFile(String filename, String text) throws IOException {
-        writeTextFile(new File(filename), text);
-    }
-
-    public static void writeTextFile(File file, String text) throws IOException {
-        FileOutputStream fos;
-        OutputStreamWriter osw;
-        BufferedWriter bw = null;
-
-        try {
-            fos = new FileOutputStream(file);
-            osw = new OutputStreamWriter(fos, CHARSET_UTF8);
-            bw = new BufferedWriter(osw);
-
-            bw.write(text);
-
-            bw.close();
-        } finally {
-            if (bw != null) bw.close();
-        }
-    }
-
-    private static String cs(File f) throws IOException {
-        String checksum;
-        try (FileInputStream fis = new FileInputStream(f)) { checksum = DigestUtils.sha256Hex(fis).toUpperCase(); }
-        return checksum;
     }
 }
