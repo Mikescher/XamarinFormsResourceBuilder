@@ -310,6 +310,8 @@ public class Main {
         String xold = f_out.exists() ? readUTF8TextFile(f_out) : "";
         String xnew = readUTF8TextFile(f_tmp_file);
 
+        if (!xnew.contains("<vector")) throw new Exception("vd-tool resulted in invalid output:\n" + xnew);
+
         if (xnew.isEmpty()) {
             throw new Exception("Conversion resulted in empty file");
         } else if (xold.isEmpty()) {
