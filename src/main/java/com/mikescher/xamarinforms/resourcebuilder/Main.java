@@ -5,6 +5,7 @@ import com.mortennobel.imagescaling.ResampleOp;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fop.svg.PDFTranscoder;
 import org.w3c.dom.Document;
@@ -86,7 +87,7 @@ public class Main {
 
     private static void runFromImage(String filepath, Element outputNode, String outputpath) throws Exception
     {
-        outputpath = outputpath.replace("{filename}", new File(outputpath).getName());
+        outputpath = outputpath.replace("{filename}", FilenameUtils.getBaseName(filepath));
         outputpath = outputpath.replace("{originalwidth}",  "" + getWidthFromPNG(filepath));
         outputpath = outputpath.replace("{originalheight}", "" + getHeightFromPNG(filepath));
 
@@ -136,7 +137,7 @@ public class Main {
     }
 
     private static void runFromSVG(String filepath, Element outputNode, String outputpath) throws Exception {
-        outputpath = outputpath.replace("{filename}", new File(outputpath).getName());
+        outputpath = outputpath.replace("{filename}", FilenameUtils.getBaseName(filepath));
         outputpath = outputpath.replace("{originalwidth}",  "" + getRoundedWidthFromSVG(filepath));
         outputpath = outputpath.replace("{originalheight}", "" + getRoundedHeightFromSVG(filepath));
 

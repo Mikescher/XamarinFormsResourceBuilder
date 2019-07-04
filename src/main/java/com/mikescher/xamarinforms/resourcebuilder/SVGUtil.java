@@ -27,7 +27,7 @@ public class SVGUtil {
         String[] s = root.getAttribute("viewBox").split(" ");
         if (s.length != 4) throw new Exception("Invalid viewBox value");
 
-        return NumberFormat.getInstance(Locale.US).parse(s[3]).doubleValue();
+        return NumberFormat.getInstance(Locale.US).parse(s[2]).doubleValue();
     }
 
     public static double getFloatHeightFromSVG(String path) throws Exception
