@@ -48,12 +48,12 @@ public class SVGUtil {
         return NumberFormat.getInstance(Locale.US).parse(s[3]).doubleValue();
     }
 
-    public static double getRoundedHeightFromSVG(String path) throws Exception
+    public static int getRoundedHeightFromSVG(String path) throws Exception
     {
         return (int)Math.round(getFloatHeightFromSVG(path));
     }
 
-    public static double getRoundedWidthFromSVG(String path) throws Exception
+    public static int getRoundedWidthFromSVG(String path) throws Exception
     {
         return (int)Math.round(getFloatWidthFromSVG(path));
     }

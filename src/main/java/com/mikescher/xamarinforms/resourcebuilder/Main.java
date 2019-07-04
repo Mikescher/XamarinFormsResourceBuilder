@@ -304,7 +304,12 @@ public class Main {
         File f_tmp_file = Paths.get(f_tmp_dir.getAbsolutePath(), f_in.getName().replace(".svg", ".xml")).toFile();
         f_tmp_file.deleteOnExit();
 
-        Tuple3<Integer, String, String> r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c", "-widthDp", un_dp(ww), "-heightDp", un_dp(hh));
+        Tuple3<Integer, String, String> r;
+        if (Double.parseDouble(un_dp(ww)) ==  getFloatWidthFromSVG(input) && Double.parseDouble(un_dp(hh)) == getFloatHeightFromSVG(input)) {
+            r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c");
+        } else {
+            r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c", "-widthDp", un_dp(ww), "-heightDp", un_dp(hh));
+        }
 
         if (r.Item1 != 0)  throw new Exception("vd-tool failed: \n\n" + r.Item1 + "\n\n" + r.Item2 + "\n\n" + r.Item3);
 
