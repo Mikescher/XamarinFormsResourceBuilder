@@ -12,9 +12,8 @@ import java.util.Locale;
 
 public class SVGUtil {
 
-    public static double getFloatWidthFromSVG(String path) throws Exception
+    public static double getFloatWidthFromSVG(File fXmlFile) throws Exception
     {
-        File fXmlFile = new File(path);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(fXmlFile);
@@ -30,9 +29,8 @@ public class SVGUtil {
         return NumberFormat.getInstance(Locale.US).parse(s[2]).doubleValue();
     }
 
-    public static double getFloatHeightFromSVG(String path) throws Exception
+    public static double getFloatHeightFromSVG(File fXmlFile) throws Exception
     {
-        File fXmlFile = new File(path);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(fXmlFile);
@@ -48,17 +46,17 @@ public class SVGUtil {
         return NumberFormat.getInstance(Locale.US).parse(s[3]).doubleValue();
     }
 
-    public static int getRoundedHeightFromSVG(String path) throws Exception
+    public static int getRoundedHeightFromSVG(File path) throws Exception
     {
         return (int)Math.round(getFloatHeightFromSVG(path));
     }
 
-    public static int getRoundedWidthFromSVG(String path) throws Exception
+    public static int getRoundedWidthFromSVG(File path) throws Exception
     {
         return (int)Math.round(getFloatWidthFromSVG(path));
     }
 
-    public static int calcAutoWidthFromSVG(String path, int height) throws Exception
+    public static int calcAutoWidthFromSVG(File path, int height) throws Exception
     {
         double svg_width = getFloatWidthFromSVG(path);
         double svg_height = getFloatHeightFromSVG(path);
@@ -66,7 +64,7 @@ public class SVGUtil {
         return (int)Math.round((svg_width/svg_height) * height);
     }
 
-    public static int calcAutoHeightFromSVG(String path, int width) throws Exception
+    public static int calcAutoHeightFromSVG(File path, int width) throws Exception
     {
         double svg_width = getFloatWidthFromSVG(path);
         double svg_height = getFloatHeightFromSVG(path);

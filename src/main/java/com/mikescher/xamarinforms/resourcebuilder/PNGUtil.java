@@ -12,6 +12,16 @@ import java.util.Locale;
 
 public class PNGUtil {
 
+    public static int getWidthFromPNG(File f) throws Exception
+    {
+        return ImageIO.read(f).getWidth();
+    }
+
+    public static int getHeightFromPNG(File f) throws Exception
+    {
+        return ImageIO.read(f).getHeight();
+    }
+
     public static int getWidthFromPNG(String path) throws Exception
     {
         return ImageIO.read(new File(path)).getWidth();

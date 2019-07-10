@@ -5,6 +5,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileIO {
     public final static Charset CHARSET_UTF8 = StandardCharsets.UTF_8; //$NON-NLS-1$
@@ -17,6 +19,19 @@ public class FileIO {
         String result = readUTF8TextFile(stream = new FileInputStream(file));
         stream.close();
         return result;
+    }
+
+    public static List<String> readUTF8TextFileLines(String file) throws IOException {
+        String str = readUTF8TextFile(new File(file));
+        String[] arr = str.split("\\r?\\n");
+        List<String> ls = new ArrayList<>();
+
+        for (int i = 0; i < arr.length; i++)
+        {
+            if (arr[i].isEmpty()) continue;
+            ls.add(arr[i]);
+        }
+        return ls;
     }
 
     public static String readUTF8TextFile(FileInputStream file) throws IOException {
@@ -75,6 +90,10 @@ public class FileIO {
         String checksum;
         try (FileInputStream fis = new FileInputStream(f)) { checksum = DigestUtils.sha256Hex(fis).toUpperCase(); }
         return checksum;
+    }
+
+    public static String cs(String s) throws IOException {
+        return DigestUtils.sha256Hex(s).toUpperCase();
     }
 
 }

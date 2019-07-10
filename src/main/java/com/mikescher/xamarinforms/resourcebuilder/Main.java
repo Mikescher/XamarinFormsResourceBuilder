@@ -1,32 +1,33 @@
 package com.mikescher.xamarinforms.resourcebuilder;
 
-import com.mortennobel.imagescaling.ResampleFilters;
-import com.mortennobel.imagescaling.ResampleOp;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.fop.svg.PDFTranscoder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.Map;
 
-import static com.mikescher.xamarinforms.resourcebuilder.FileIO.*;
-import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.*;
+import static com.mikescher.xamarinforms.resourcebuilder.FileIO.cs;
+import static com.mikescher.xamarinforms.resourcebuilder.FileIO.writeTextFile;
 import static com.mikescher.xamarinforms.resourcebuilder.PNGUtil.*;
+import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.*;
 
 public class Main {
-    private static String vdt;
+    public static final String LOCK_VERSION = "1.1.0.0";
+
+    public static String vdt;
+
+    public static HashMap<Tuple2<String, String>, String> lockdata;
+    public static HashMap<Tuple2<String, String>, String> lockdata_new = new HashMap<>();
 
     public static void main(String[] args) throws Exception
     {
@@ -51,6 +52,18 @@ public class Main {
                 ? Paths.get(dir, root.getAttribute("vd-tool-win")).toAbsolutePath().toString()
                 : Paths.get(dir, root.getAttribute("vd-tool-nix")).toAbsolutePath().toString();
 
+        File f_lock = Paths.get(dir, root.getAttribute("lockfile")).toFile();
+
+        lockdata = new HashMap<>();
+        if (f_lock.exists())
+        {
+            for (String s : FileIO.readUTF8TextFileLines(f_lock.getAbsolutePath()))
+            {
+                String[] arr = s.split("\t");
+                lockdata.put(Tuple2.Create(arr[0], arr[1]), arr[2]);
+            }
+        }
+
         NodeList fileNodes = root.getElementsByTagName("file");
         for (int i = 0; i < fileNodes.getLength(); i++)
         {
@@ -66,91 +79,89 @@ public class Main {
                 Element outputNode = (Element)outputNodes.item(j);
                 String outputpath = Paths.get(dir, outroot, outputNode.getAttribute("path")).toAbsolutePath().toString() ;
 
-                run(filepath, outputNode, outputpath);
+                run(filepath, outputNode, outputpath, fileNode.getAttribute("path"), outputNode.getAttribute("path"));
             }
 
             System.out.println();
         }
+
+        System.out.println("[WRITING LOCK]");
+        StringBuilder b = new StringBuilder();
+        for (Map.Entry<Tuple2<String, String>, String> e : lockdata_new.entrySet())
+            b.append(e.getKey().Item1).append("\t").append(e.getKey().Item2).append("\t").append(e.getValue()).append("\n");
+        writeTextFile(f_lock, b.toString());
+        System.out.println("[FINISHED]");
     }
 
-    private static void run(String filepath, Element outputNode, String outputpath) throws Exception
+    private static void run(String filepath, Element outputNode, String outputpath, String rawinput, String rawoutput) throws Exception
     {
-
         if (filepath.endsWith(".svg"))
-            runFromSVG(filepath, outputNode, outputpath);
+            runFromSVG(filepath, outputNode, outputpath, rawinput, rawoutput);
         else if (filepath.endsWith(".png") || outputpath.endsWith(".jpg") || outputpath.endsWith(".jpeg") || outputpath.endsWith(".bmp"))
-            runFromImage(filepath, outputNode, outputpath);
+            runFromRasterImage(filepath, outputNode, outputpath, rawinput, rawoutput);
         else
             throw new Exception("Unsupported file extension for " + filepath);
-
     }
 
-    private static void runFromImage(String filepath, Element outputNode, String outputpath) throws Exception
+    private static void runFromRasterImage(String filepath, Element outputNode, String outputpath, String rawinput, String rawoutput) throws Exception
     {
         outputpath = outputpath.replace("{filename}", FilenameUtils.getBaseName(filepath));
         outputpath = outputpath.replace("{originalwidth}",  "" + getWidthFromPNG(filepath));
         outputpath = outputpath.replace("{originalheight}", "" + getHeightFromPNG(filepath));
 
-        if (outputpath.endsWith(".png")) {
-            String strww = outputNode.getAttribute("width");
-            String strhh = outputNode.getAttribute("height");
-            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
-                strww = "" + getWidthFromPNG(filepath);
-                strhh = "" + getHeightFromPNG(filepath);
-            } else if (strww.equalsIgnoreCase("auto")) {
-                strww = "" + calcAutoWidthFromPNG(filepath, Integer.parseInt(strhh));
-            } else if (strhh.equalsIgnoreCase("auto")) {
-                strhh = "" + calcAutoHeightFromPNG(filepath, Integer.parseInt(strww));
-            }
-            int ww = Integer.parseInt(strww);
-            int hh = Integer.parseInt(strhh);
+        String strww = outputNode.getAttribute("width");
+        String strhh = outputNode.getAttribute("height");
+        if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
+            strww = "" + getWidthFromPNG(filepath);
+            strhh = "" + getHeightFromPNG(filepath);
+        } else if (strww.equalsIgnoreCase("auto")) {
+            strww = "" + calcAutoWidthFromPNG(filepath, Integer.parseInt(strhh));
+        } else if (strhh.equalsIgnoreCase("auto")) {
+            strhh = "" + calcAutoHeightFromPNG(filepath, Integer.parseInt(strww));
+        }
+        int ww = Integer.parseInt(strww);
+        int hh = Integer.parseInt(strhh);
 
-            outputpath = outputpath.replace("{width}", ""+ww);
-            outputpath = outputpath.replace("{height}", ""+hh);
+        outputpath = outputpath.replace("{width}", ""+ww);
+        outputpath = outputpath.replace("{height}", ""+hh);
 
-            outputRasterImageFromImage(filepath, outputpath, ww, hh);
+        HashMap<String, String> args = new HashMap<>();
+        args.put("width", Integer.toString(ww));
+        args.put("height", Integer.toString(hh));
 
-        } else if (outputpath.endsWith(".jpg") || outputpath.endsWith(".jpeg")) {
-            String strww = outputNode.getAttribute("width");
-            String strhh = outputNode.getAttribute("height");
-            if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
-                strww = "" + getWidthFromPNG(filepath);
-                strhh = "" + getHeightFromPNG(filepath);
-            } else if (strww.equalsIgnoreCase("auto")) {
-                strww = "" + calcAutoWidthFromPNG(filepath, Integer.parseInt(strhh));
-            } else if (strhh.equalsIgnoreCase("auto")) {
-                strhh = "" + calcAutoHeightFromPNG(filepath, Integer.parseInt(strww));
-            }
-            int ww = Integer.parseInt(strww);
-            int hh = Integer.parseInt(strhh);
-
-            outputpath = outputpath.replace("{width}", ""+ww);
-            outputpath = outputpath.replace("{height}", ""+hh);
-
-            outputJPEGFromImage(filepath, outputpath, ww, hh);
-
-        } else {
-
+        if (outputpath.endsWith(".png"))
+        {
+            output(filepath, outputpath, args, Converter::convertRasterToPNG, rawinput, rawoutput);
+        }
+        else if (outputpath.endsWith(".jpg") || outputpath.endsWith(".jpeg"))
+        {
+            output(filepath, outputpath, args, Converter::convertRasterToJPEG, rawinput, rawoutput);
+        }
+        else
+        {
             throw new Exception("Unsupported file extension for " + outputpath);
-
         }
     }
 
-    private static void runFromSVG(String filepath, Element outputNode, String outputpath) throws Exception {
+    private static void runFromSVG(String filepath, Element outputNode, String outputpath, String rawinput, String rawoutput) throws Exception
+    {
+        File f_in = new File(filepath);
+
         outputpath = outputpath.replace("{filename}", FilenameUtils.getBaseName(filepath));
-        outputpath = outputpath.replace("{originalwidth}",  "" + getRoundedWidthFromSVG(filepath));
-        outputpath = outputpath.replace("{originalheight}", "" + getRoundedHeightFromSVG(filepath));
+        outputpath = outputpath.replace("{originalwidth}",  "" + getRoundedWidthFromSVG(f_in));
+        outputpath = outputpath.replace("{originalheight}", "" + getRoundedHeightFromSVG(f_in));
+
 
         if (outputpath.endsWith(".png")) {
             String strww = outputNode.getAttribute("width");
             String strhh = outputNode.getAttribute("height");
             if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
-                strww = "" + getRoundedWidthFromSVG(filepath);
-                strhh = "" + getRoundedHeightFromSVG(filepath);
+                strww = "" + getRoundedWidthFromSVG(f_in);
+                strhh = "" + getRoundedHeightFromSVG(f_in);
             } else if (strww.equalsIgnoreCase("auto")) {
-                strww = "" + calcAutoWidthFromSVG(filepath, Integer.parseInt(strhh));
+                strww = "" + calcAutoWidthFromSVG(f_in, Integer.parseInt(strhh));
             } else if (strhh.equalsIgnoreCase("auto")) {
-                strhh = "" + calcAutoHeightFromSVG(filepath, Integer.parseInt(strww));
+                strhh = "" + calcAutoHeightFromSVG(f_in, Integer.parseInt(strww));
             }
             int ww = Integer.parseInt(strww);
             int hh = Integer.parseInt(strhh);
@@ -158,24 +169,33 @@ public class Main {
             outputpath = outputpath.replace("{width}", ""+ww);
             outputpath = outputpath.replace("{height}", ""+hh);
 
-            outputRasterImageFromSVG(filepath, outputpath, ww, hh);
+            HashMap<String, String> args = new HashMap<>();
+            args.put("width", Integer.toString(ww));
+            args.put("height", Integer.toString(hh));
+
+            output(filepath, outputpath, args, Converter::convertSVGToPNG, rawinput, rawoutput);
 
         } else if (outputpath.endsWith(".xml")) {
             String strww = outputNode.getAttribute("vector_width");
             String strhh = outputNode.getAttribute("vector_height");
             if (strww.equalsIgnoreCase("auto") && strhh.equalsIgnoreCase("auto")) {
-                strww = getRoundedWidthFromSVG(filepath) + "dp";
-                strhh = getRoundedHeightFromSVG(filepath) + "dp";
+                strww = getRoundedWidthFromSVG(f_in) + "dp";
+                strhh = getRoundedHeightFromSVG(f_in) + "dp";
             } else if (strww.equalsIgnoreCase("auto")) {
-                strww = "" + calcAutoWidthFromSVG(filepath, Integer.parseInt(un_dp(strhh))) + "dp";
+                strww = "" + calcAutoWidthFromSVG(f_in, Integer.parseInt(un_dp(strhh))) + "dp";
             } else if (strhh.equalsIgnoreCase("auto")) {
-                strww = "" + calcAutoHeightFromSVG(filepath, Integer.parseInt(un_dp(strhh))) + "dp";
+                strww = "" + calcAutoHeightFromSVG(f_in, Integer.parseInt(un_dp(strhh))) + "dp";
             }
-            outputAndroidVectorFromSVG(filepath, outputpath, strww, strhh);
+
+            HashMap<String, String> args = new HashMap<>();
+            args.put("width",  strww);
+            args.put("height", strhh);
+
+            output(filepath, outputpath, args, Converter::convertSVGToVector, rawinput, rawoutput);
 
         } else if (outputpath.endsWith(".pdf")) {
 
-            outputVectorPDFFromSVG(filepath, outputpath);
+            output(filepath, outputpath, new HashMap<>(), Converter::convertSVGToPDF, rawinput, rawoutput);
 
         } else {
 
@@ -184,184 +204,91 @@ public class Main {
         }
     }
 
-    private static void outputRasterImageFromImage(String input, String output, int ww, int hh) throws Exception
+    private static void output(String input, String output, HashMap<String, String> parameter, IConverter conv, String rawinput, String rawoutput) throws Exception
     {
-        File f_tmp = File.createTempFile("xfrb_2_", ".png");
-        f_tmp.deleteOnExit();
-        File f_out = Paths.get(output).toFile();
+        File f_in  = new File(input);
+        File f_out = new File(output);
 
-        BufferedImage img = ImageIO.read(new File(input));
+        if (!f_in.exists()) throw new Exception("File '" + f_in.getAbsolutePath() + "' does not exist");
 
-        BufferedImage scaledImage;
-        if (ww == getWidthFromPNG(input) && hh == getHeightFromPNG(input)) {
-            scaledImage = img;
-        } else {
-            ResampleOp resizeOp = new ResampleOp(ww, hh);
-            resizeOp.setFilter(ResampleFilters.getLanczos3Filter());
-            scaledImage = resizeOp.filter(img, null);
+        Tuple2<File, String> result = conv.run(f_in, parameter);
+
+        if (lockcheck(input, output, parameter, rawinput, rawoutput))
+        {
+            result.Item1.delete();
+            System.out.println("[ ] " + result.Item2 + "  --  Not needed");
+            setLockdata(input, output, parameter, rawinput, rawoutput);
+            return;
         }
-
-        ImageIO.write(scaledImage, "PNG", f_tmp);
 
         String xold = f_out.exists() ? cs(f_out) : "";
-        String xnew = cs(f_tmp);
+        String xnew = cs(result.Item1);
 
-        if (xnew.isEmpty()) {
+        if (xnew.length() < 8) {
             throw new Exception("Conversion resulted in empty file");
         } else if (xold.isEmpty()) {
             new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File created");
+            result.Item1.renameTo(new File(output));
+            System.out.println("[#] " + result.Item2 + "  --  File created");
+            setLockdata(input, output, parameter, rawinput, rawoutput);
         } else if (xold.equals(xnew)) {
-            f_tmp.delete();
-            System.out.println("[ ] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
+            result.Item1.delete();
+            System.out.println("[/] " + result.Item2 + "  --  No changes");
+            setLockdata(input, output, parameter, rawinput, rawoutput);
         } else {
             new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
+            result.Item1.renameTo(new File(output));
+            System.out.println("[#] " + result.Item2 + "  --  File changed");
+            setLockdata(input, output, parameter, rawinput, rawoutput);
         }
     }
 
-    private static void outputJPEGFromImage(String input, String output, int ww, int hh) throws Exception
+    private static void setLockdata(String input, String output, HashMap<String, String> parameter, String rawinput, String rawoutput) throws Exception
     {
-        File f_tmp = File.createTempFile("xfrb_2_", ".jpeg");
-        f_tmp.deleteOnExit();
-        File f_out = Paths.get(output).toFile();
-
-        BufferedImage img = ImageIO.read(new File(input));
-
-        BufferedImage scaledImage;
-        if (ww == getWidthFromPNG(input) && hh == getHeightFromPNG(input)) {
-            scaledImage = img;
-        } else {
-            ResampleOp resizeOp = new ResampleOp(ww, hh);
-            resizeOp.setFilter(ResampleFilters.getLanczos3Filter());
-            scaledImage = resizeOp.filter(img, null);
-        }
-
-        ImageIO.write(scaledImage, "JPG", f_tmp);
-
-        String xold = f_out.exists() ? cs(f_out) : "";
-        String xnew = cs(f_tmp);
-
-        if (xnew.isEmpty()) {
-            throw new Exception("Conversion resulted in empty file");
-        } else if (xold.isEmpty()) {
-            new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24) + "  --  File created");
-        } else if (xold.equals(xnew)) {
-            f_tmp.delete();
-            System.out.println("[ ] " + StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
-        } else {
-            new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
-        }
+        String cs = calculatelockcheck(input, output, parameter);
+        lockdata_new.put(Tuple2.Create(rawinput, rawoutput), cs);
     }
 
-    private static void outputRasterImageFromSVG(String input, String output, int ww, int hh) throws Exception
+    private static boolean lockcheck(String input, String output, HashMap<String, String> parameter, String rawinput, String rawoutput) throws Exception
     {
-        File f_tmp = File.createTempFile("xfrb_2_", ".png");
-        f_tmp.deleteOnExit();
-        File f_out = Paths.get(output).toFile();
+        File f1 = new File(input);
+        File f2 = new File(output);
 
-        PNGTranscoder t = new PNGTranscoder();
-        t.addTranscodingHint(PNGTranscoder.KEY_WIDTH, (float) ww);
-        t.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, (float) hh);
-        TranscoderInput tcinput = new TranscoderInput(new FileInputStream(input));
-        OutputStream ostream = new FileOutputStream(f_tmp);
-        TranscoderOutput tcoutput = new TranscoderOutput(ostream);
-        t.transcode(tcinput, tcoutput);
-        ostream.flush();
+        if (!f1.exists()) return false;
+        if (!f2.exists()) return false;
 
-        String xold = f_out.exists() ? cs(f_out) : "";
-        String xnew = cs(f_tmp);
+        String dat = lockdata.get(Tuple2.Create(rawinput, rawoutput));
+        if (dat == null) return false;
 
-        if (xnew.isEmpty()) {
-            throw new Exception("Conversion resulted in empty file");
-        } else if (xold.isEmpty()) {
-            new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File created");
-        } else if (xold.equals(xnew)) {
-            f_tmp.delete();
-            System.out.println("[ ] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  No changes");
-        } else {
-            new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24) + "  --  File changed");
-        }
+        String cs = calculatelockcheck(input, output, parameter);
+
+        if (cs.equals(dat)) return true;
+
+        return false;
     }
 
-    private static void outputAndroidVectorFromSVG(String input, String output, String ww, String hh) throws Exception
+    private static String calculatelockcheck(String input, String output, HashMap<String, String> parameter) throws Exception
     {
-        File f_in = new File(input);
-        File f_out = Paths.get(output).toFile();
-        File f_tmp_dir = Paths.get(System.getProperty("java.io.tmpdir"), "xfrb_" + UUID.randomUUID()).toFile();
-        f_tmp_dir.mkdirs();
-        f_tmp_dir.deleteOnExit();
-        File f_tmp_file = Paths.get(f_tmp_dir.getAbsolutePath(), f_in.getName().replace(".svg", ".xml")).toFile();
-        f_tmp_file.deleteOnExit();
+        File f1 = new File(input);
+        File f2 = new File(output);
 
-        Tuple3<Integer, String, String> r;
-        if (Double.parseDouble(un_dp(ww)) ==  getFloatWidthFromSVG(input) && Double.parseDouble(un_dp(hh)) == getFloatHeightFromSVG(input)) {
-            r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c");
-        } else {
-            r = ProcessHelper.procExec(vdt, "-in", input, "-out", f_tmp_file.getParent(), "-c", "-widthDp", un_dp(ww), "-heightDp", un_dp(hh));
-        }
+        if (!f1.exists()) return "";
+        if (!f2.exists()) return "";
 
-        if (r.Item1 != 0)  throw new Exception("vd-tool failed: \n\n" + r.Item1 + "\n\n" + r.Item2 + "\n\n" + r.Item3);
+        String cs1 = cs(f1);
+        String cs2 = cs(f2);
 
-        String xold = f_out.exists() ? readUTF8TextFile(f_out) : "";
-        String xnew = readUTF8TextFile(f_tmp_file);
+        StringBuilder b = new StringBuilder();
+        for (Map.Entry<String, String> s : parameter.entrySet()) b.append(s.getKey()).append("\t").append(s.getValue()).append("\n");
 
-        if (!xnew.contains("<vector")) throw new Exception("vd-tool resulted in invalid output:\n" + xnew);
+        String cs3 = cs(b.toString());
 
-        if (xnew.isEmpty()) {
-            throw new Exception("Conversion resulted in empty file");
-        } else if (xold.isEmpty()) {
-            f_out.delete();
-            f_tmp_file.renameTo(f_out);
-            f_tmp_dir.delete();
-            System.out.println("[!] " + StringUtils.rightPad("XML @ ("+ww+")x("+hh+")", 24) + "  --  File created");
-        } else if (xold.equals(xnew)) {
-            f_tmp_file.delete();
-            f_tmp_dir.delete();
-            System.out.println("[ ] " + StringUtils.rightPad("XML @ ("+ww+")x("+hh+")", 24) + "  --  No changes");
-        } else {
-            f_out.delete();
-            f_tmp_file.renameTo(f_out);
-            f_tmp_dir.delete();
-            System.out.println("[!] " + StringUtils.rightPad("XML @ ("+ww+")x("+hh+")", 24) + "  --  File changed");
-        }
+        File f = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        BasicFileAttributes a = Files.readAttributes(f.toPath(), BasicFileAttributes.class);
+
+        String fi = LOCK_VERSION;
+
+        return cs(cs1 + cs2 + cs3 + fi); // [ INPUT, OUTPUT, PARAM, BINARY ]
     }
 
-    private static void outputVectorPDFFromSVG(String input, String output) throws Exception
-    {
-        File f_tmp = File.createTempFile("xfrb_3_", ".pdf");
-        f_tmp.deleteOnExit();
-        File f_out = Paths.get(output).toFile();
-        File f_in = new File(input);
-
-        if (f_out.exists() && f_out.lastModified() >= f_in.lastModified()) return;
-
-        PDFTranscoder t = new PDFTranscoder();
-        TranscoderInput tcinput = new TranscoderInput(new FileInputStream(input));
-        OutputStream ostream = new FileOutputStream(f_tmp);
-        TranscoderOutput tcoutput = new TranscoderOutput(ostream);
-        t.transcode(tcinput, tcoutput);
-        ostream.flush();
-        ostream.close();
-
-        if (f_out.exists()) {
-            new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("PDF", 24) + "  --  File changed");
-        } else {
-            new File(output).delete();
-            f_tmp.renameTo(new File(output));
-            System.out.println("[!] " + StringUtils.rightPad("PDF", 24) + "  --  File created");
-        }
-    }
 }
