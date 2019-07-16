@@ -87,9 +87,11 @@ public class Main {
                 String outputpath = Paths.get(dir, outroot, outputNode.getAttribute("path")).toAbsolutePath().toString() ;
 
                 run(filepath, outputNode, outputpath, fileNode.getAttribute("path"), outputNode.getAttribute("path"));
+
             }
 
             System.out.println();
+            ThreadUtils.safeSleep(150);
         }
 
         System.out.println("[WRITING LOCK]");
@@ -149,11 +151,11 @@ public class Main {
 
         if (outputpath.endsWith(".png"))
         {
-            output(filepath, outputpath, args, Converter::convertRasterToPNG, rawinput, rawoutput);
+            output(filepath, outputpath, args, Converter.RASTER_TO_PNG, rawinput, rawoutput);
         }
         else if (outputpath.endsWith(".jpg") || outputpath.endsWith(".jpeg"))
         {
-            output(filepath, outputpath, args, Converter::convertRasterToJPEG, rawinput, rawoutput);
+            output(filepath, outputpath, args, Converter.RASTER_TO_JPEG, rawinput, rawoutput);
         }
         else
         {
@@ -191,7 +193,7 @@ public class Main {
             args.put("width", Integer.toString(ww));
             args.put("height", Integer.toString(hh));
 
-            output(filepath, outputpath, args, Converter::convertSVGToPNG, rawinput, rawoutput);
+            output(filepath, outputpath, args, Converter.SVG_TO_PNG, rawinput, rawoutput);
 
         } else if (outputpath.endsWith(".xml")) {
             String strww = outputNode.getAttribute("vector_width");
@@ -209,11 +211,11 @@ public class Main {
             args.put("width",  strww);
             args.put("height", strhh);
 
-            output(filepath, outputpath, args, Converter::convertSVGToVector, rawinput, rawoutput);
+            output(filepath, outputpath, args, Converter.SVG_TO_VECTOR, rawinput, rawoutput);
 
         } else if (outputpath.endsWith(".pdf")) {
 
-            output(filepath, outputpath, new HashMap<>(), Converter::convertSVGToPDF, rawinput, rawoutput);
+            output(filepath, outputpath, new HashMap<>(), Converter.SVG_TO_PDF, rawinput, rawoutput);
 
         } else {
 
@@ -222,44 +224,45 @@ public class Main {
         }
     }
 
-    private static void output(String input, String output, HashMap<String, String> parameter, IConverter conv, String rawinput, String rawoutput) throws Exception
+    private static void output(String input, String output, HashMap<String, String> parameter, Tuple2<IConverter, IConverterTypeStr> conv, String rawinput, String rawoutput) throws Exception
     {
         File f_in  = new File(input);
         File f_out = new File(output);
 
         if (!f_in.exists()) throw new Exception("File '" + f_in.getAbsolutePath() + "' does not exist");
 
-        Tuple2<File, String> result = conv.run(f_in, parameter);
+        String resultName = conv.Item2.run(parameter);
 
         if (lockcheck(input, output, parameter, rawinput, rawoutput))
         {
-            result.Item1.delete();
-            System.out.println("[ ] " + result.Item2 + "  --  Not needed");
+            System.out.println("[ ] " + resultName + "  --  Not needed");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_NotNeeded++;
             return;
         }
 
+        File resultFile = conv.Item1.run(f_in, parameter);
+
         String xold = f_out.exists() ? cs(f_out) : "";
-        String xnew = cs(result.Item1);
+        String xnew = cs(resultFile);
 
         if (xnew.length() < 8) {
             throw new Exception("Conversion resulted in empty file");
         } else if (xold.isEmpty()) {
             new File(output).delete();
-            result.Item1.renameTo(new File(output));
-            System.out.println("[#] " + result.Item2 + "  --  File created");
+            resultFile.renameTo(new File(output));
+            System.out.println("[#] " + resultName + "  --  File created");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_Created++;
         } else if (xold.equals(xnew)) {
-            result.Item1.delete();
-            System.out.println("[/] " + result.Item2 + "  --  No changes");
+            resultFile.delete();
+            System.out.println("[/] " + resultName + "  --  No changes");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_NoChanges++;
         } else {
             new File(output).delete();
-            result.Item1.renameTo(new File(output));
-            System.out.println("[#] " + result.Item2 + "  --  File changed");
+            resultFile.renameTo(new File(output));
+            System.out.println("[#] " + resultName + "  --  File changed");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_Changed++;
         }

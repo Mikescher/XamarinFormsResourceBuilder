@@ -24,7 +24,20 @@ import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.un_dp;
 
 public class Converter
 {
-    public static Tuple2<File, String> convertRasterToPNG(File input, HashMap<String, String> parameter) throws Exception
+    public static Tuple2<IConverter, IConverterTypeStr> RASTER_TO_PNG  = Tuple2.Create(Converter::convertRasterToPNG,  Converter::getTypeStrRasterToPNG);
+    public static Tuple2<IConverter, IConverterTypeStr> RASTER_TO_JPEG = Tuple2.Create(Converter::convertRasterToJPEG, Converter::getTypeStrRasterToJPEG);
+    public static Tuple2<IConverter, IConverterTypeStr> SVG_TO_PNG     = Tuple2.Create(Converter::convertSVGToPNG,     Converter::getTypeStrSVGToPNG);
+    public static Tuple2<IConverter, IConverterTypeStr> SVG_TO_PDF     = Tuple2.Create(Converter::convertSVGToPDF,     Converter::getTypeStrSVGToPDF);
+    public static Tuple2<IConverter, IConverterTypeStr> SVG_TO_VECTOR  = Tuple2.Create(Converter::convertSVGToVector,  Converter::getTypeStrSVGToVector);
+
+    public static String getTypeStrRasterToPNG(HashMap<String, String> parameter)
+    {
+        int ww = Integer.parseInt(parameter.get("width"));
+        int hh = Integer.parseInt(parameter.get("height"));
+        return StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24);
+    }
+
+    public static File convertRasterToPNG(File input, HashMap<String, String> parameter) throws Exception
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
@@ -45,10 +58,17 @@ public class Converter
 
         ImageIO.write(scaledImage, "PNG", f_tmp);
 
-        return Tuple2.Create(f_tmp, StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24));
+        return f_tmp;
     }
 
-    public static Tuple2<File, String> convertRasterToJPEG(File input, HashMap<String, String> parameter) throws Exception
+    public static String getTypeStrRasterToJPEG(HashMap<String, String> parameter)
+    {
+        int ww = Integer.parseInt(parameter.get("width"));
+        int hh = Integer.parseInt(parameter.get("height"));
+        return StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24);
+    }
+
+    public static File convertRasterToJPEG(File input, HashMap<String, String> parameter) throws Exception
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
@@ -69,10 +89,17 @@ public class Converter
 
         ImageIO.write(scaledImage, "JPG", f_tmp);
 
-        return Tuple2.Create(f_tmp, StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24));
+        return f_tmp;
     }
 
-    public static Tuple2<File, String> convertSVGToPNG(File input, HashMap<String, String> parameter) throws Exception
+    public static String getTypeStrSVGToPNG(HashMap<String, String> parameter)
+    {
+        int ww = Integer.parseInt(parameter.get("width"));
+        int hh = Integer.parseInt(parameter.get("height"));
+        return StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24);
+    }
+
+    public static File convertSVGToPNG(File input, HashMap<String, String> parameter) throws Exception
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
@@ -89,10 +116,17 @@ public class Converter
         t.transcode(tcinput, tcoutput);
         ostream.flush();
 
-        return Tuple2.Create(f_tmp, StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24));
+        return f_tmp;
     }
 
-    public static Tuple2<File, String> convertSVGToVector(File input, HashMap<String, String> parameter) throws Exception
+    public static String getTypeStrSVGToVector(HashMap<String, String> parameter)
+    {
+        String ww = parameter.get("width");
+        String hh = parameter.get("height");
+        return StringUtils.rightPad("XML @ "+ww+"x"+hh+"", 24);
+    }
+
+    public static File convertSVGToVector(File input, HashMap<String, String> parameter) throws Exception
     {
         String ww = parameter.get("width");
         String hh = parameter.get("height");
@@ -116,10 +150,15 @@ public class Converter
         String xnew = readUTF8TextFile(f_tmp_file);
         if (!xnew.contains("<vector")) throw new Exception("vd-tool resulted in invalid output:\n" + xnew);
 
-        return Tuple2.Create(f_tmp_file, StringUtils.rightPad("XML @ "+ww+"x"+hh+"", 24));
+        return f_tmp_file;
     }
 
-    public static Tuple2<File, String> convertSVGToPDF(File input, HashMap<String, String> parameter) throws Exception
+    public static String getTypeStrSVGToPDF(HashMap<String, String> parameter)
+    {
+        return StringUtils.rightPad("PDF", 24);
+    }
+
+    public static File convertSVGToPDF(File input, HashMap<String, String> parameter) throws Exception
     {
         File f_tmp = File.createTempFile("xfrb_3_", ".pdf");
         f_tmp.deleteOnExit();
@@ -132,6 +171,6 @@ public class Converter
         ostream.flush();
         ostream.close();
 
-        return Tuple2.Create(f_tmp, StringUtils.rightPad("PDF", 24));
+        return f_tmp;
     }
 }
