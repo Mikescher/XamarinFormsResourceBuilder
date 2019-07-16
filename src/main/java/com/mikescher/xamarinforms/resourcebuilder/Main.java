@@ -29,8 +29,15 @@ public class Main {
     public static HashMap<Tuple2<String, String>, String> lockdata;
     public static HashMap<Tuple2<String, String>, String> lockdata_new = new HashMap<>();
 
+    private static int count_NotNeeded = 0;
+    private static int count_Changed   = 0;
+    private static int count_Created   = 0;
+    private static int count_NoChanges = 0;
+
     public static void main(String[] args) throws Exception
     {
+        long stt = System.currentTimeMillis();
+
         if (args.length < 1)
         {
             System.out.println("Not enough parameter");
@@ -91,6 +98,17 @@ public class Main {
             b.append(e.getKey().Item1).append("\t").append(e.getKey().Item2).append("\t").append(e.getValue()).append("\n");
         writeTextFile(f_lock, b.toString());
         System.out.println("[FINISHED]");
+
+        System.out.println();
+        System.out.println("[RESULT]");
+        System.out.println();
+
+        System.out.println("Update not needed (by lockfile): " + count_NotNeeded);
+        System.out.println("File changed:                    " + count_Changed);
+        System.out.println("New file created (first run):    " + count_Created);
+        System.out.println("File unchanged (checksum match): " + count_NoChanges);
+        System.out.println();
+        System.out.println("Duration: " + ((System.currentTimeMillis() - stt)/1000) + " sec");
     }
 
     private static void run(String filepath, Element outputNode, String outputpath, String rawinput, String rawoutput) throws Exception
@@ -184,7 +202,7 @@ public class Main {
             } else if (strww.equalsIgnoreCase("auto")) {
                 strww = "" + calcAutoWidthFromSVG(f_in, Integer.parseInt(un_dp(strhh))) + "dp";
             } else if (strhh.equalsIgnoreCase("auto")) {
-                strww = "" + calcAutoHeightFromSVG(f_in, Integer.parseInt(un_dp(strhh))) + "dp";
+                strhh = "" + calcAutoHeightFromSVG(f_in, Integer.parseInt(un_dp(strww))) + "dp";
             }
 
             HashMap<String, String> args = new HashMap<>();
@@ -218,6 +236,7 @@ public class Main {
             result.Item1.delete();
             System.out.println("[ ] " + result.Item2 + "  --  Not needed");
             setLockdata(input, output, parameter, rawinput, rawoutput);
+            count_NotNeeded++;
             return;
         }
 
@@ -231,15 +250,18 @@ public class Main {
             result.Item1.renameTo(new File(output));
             System.out.println("[#] " + result.Item2 + "  --  File created");
             setLockdata(input, output, parameter, rawinput, rawoutput);
+            count_Created++;
         } else if (xold.equals(xnew)) {
             result.Item1.delete();
             System.out.println("[/] " + result.Item2 + "  --  No changes");
             setLockdata(input, output, parameter, rawinput, rawoutput);
+            count_NoChanges++;
         } else {
             new File(output).delete();
             result.Item1.renameTo(new File(output));
             System.out.println("[#] " + result.Item2 + "  --  File changed");
             setLockdata(input, output, parameter, rawinput, rawoutput);
+            count_Changed++;
         }
     }
 
