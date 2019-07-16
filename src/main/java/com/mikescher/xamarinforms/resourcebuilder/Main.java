@@ -1,6 +1,7 @@
 package com.mikescher.xamarinforms.resourcebuilder;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +69,7 @@ public class Main {
             for (String s : FileIO.readUTF8TextFileLines(f_lock.getAbsolutePath()))
             {
                 String[] arr = s.split("\t");
-                lockdata.put(Tuple2.Create(arr[0], arr[1]), arr[2]);
+                lockdata.put(Tuple2.Create(arr[0].trim(), arr[1].trim()), arr[2].trim());
             }
         }
 
@@ -95,10 +97,19 @@ public class Main {
         }
 
         System.out.println("[WRITING LOCK]");
-        StringBuilder b = new StringBuilder();
-        for (Map.Entry<Tuple2<String, String>, String> e : lockdata_new.entrySet())
-            b.append(e.getKey().Item1).append("\t").append(e.getKey().Item2).append("\t").append(e.getValue()).append("\n");
-        writeTextFile(f_lock, b.toString());
+        {
+            int p1 = 3 + lockdata_new.keySet().stream().map(s -> s.Item1.length()).max(Integer::compareTo).orElse(0);
+            int p2 = 3 + lockdata_new.keySet().stream().map(s -> s.Item2.length()).max(Integer::compareTo).orElse(0);
+            StringBuilder lockdatabuilder = new StringBuilder();
+            for (Map.Entry<Tuple2<String, String>, String> e : lockdata_new.entrySet())
+                lockdatabuilder
+                        .append(StringUtils.rightPad(e.getKey().Item1, p1))
+                        .append("\t")
+                        .append(StringUtils.rightPad(e.getKey().Item2, p2))
+                        .append("\t")
+                        .append(e.getValue()).append("\n");
+            writeTextFile(f_lock, lockdatabuilder.toString());
+        }
         System.out.println("[FINISHED]");
 
         System.out.println();
