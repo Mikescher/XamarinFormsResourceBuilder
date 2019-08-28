@@ -5,11 +5,11 @@ import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.Locale;
 
+@SuppressWarnings("ALL")
 public class SVGUtil {
 
     public static double getFloatWidthFromSVG(File fXmlFile) throws Exception

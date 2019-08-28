@@ -9,12 +9,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,13 +18,14 @@ import static com.mikescher.xamarinforms.resourcebuilder.FileIO.writeTextFile;
 import static com.mikescher.xamarinforms.resourcebuilder.PNGUtil.*;
 import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.*;
 
+@SuppressWarnings("DuplicatedCode")
 public class Main {
-    public static final String LOCK_VERSION = "1.1.0.0";
+    private static final String LOCK_VERSION = "1.1.0.0";
 
-    public static String vdt;
+    static String vdt;
 
-    public static HashMap<Tuple2<String, String>, String> lockdata;
-    public static HashMap<Tuple2<String, String>, String> lockdata_new = new HashMap<>();
+    private static HashMap<Tuple2<String, String>, String> lockdata;
+    private static HashMap<Tuple2<String, String>, String> lockdata_new = new HashMap<>();
 
     private static int count_NotNeeded = 0;
     private static int count_Changed   = 0;
@@ -260,19 +256,19 @@ public class Main {
         if (xnew.length() < 8) {
             throw new Exception("Conversion resulted in empty file");
         } else if (xold.isEmpty()) {
-            new File(output).delete();
-            resultFile.renameTo(new File(output));
+            if (!new File(output).delete()) throw new Exception("File delete failed");
+            if (!resultFile.renameTo(new File(output))) throw new Exception("File renameTo failed");
             System.out.println("[#] " + resultName + "  --  File created");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_Created++;
         } else if (xold.equals(xnew)) {
-            resultFile.delete();
+            if (!resultFile.delete()) throw new Exception("File delete failed");
             System.out.println("[/] " + resultName + "  --  No changes");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_NoChanges++;
         } else {
-            new File(output).delete();
-            resultFile.renameTo(new File(output));
+            if (!new File(output).delete()) throw new Exception("File delete failed");
+            if (! resultFile.renameTo(new File(output))) throw new Exception("File renameTo failed");
             System.out.println("[#] " + resultName + "  --  File changed");
             setLockdata(input, output, parameter, rawinput, rawoutput);
             count_Changed++;
@@ -298,9 +294,7 @@ public class Main {
 
         String cs = calculatelockcheck(input, output, parameter);
 
-        if (cs.equals(dat)) return true;
-
-        return false;
+        return cs.equals(dat);
     }
 
     private static String calculatelockcheck(String input, String output, HashMap<String, String> parameter) throws Exception
@@ -319,12 +313,7 @@ public class Main {
 
         String cs3 = cs(b.toString());
 
-        File f = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        BasicFileAttributes a = Files.readAttributes(f.toPath(), BasicFileAttributes.class);
-
-        String fi = LOCK_VERSION;
-
-        return cs(cs1 + cs2 + cs3 + fi); // [ INPUT, OUTPUT, PARAM, BINARY ]
+        return cs(cs1 + cs2 + cs3 + LOCK_VERSION); // [ INPUT, OUTPUT, PARAM, BINARY ]
     }
 
 }

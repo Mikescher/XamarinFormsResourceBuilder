@@ -10,34 +10,36 @@ import org.apache.fop.svg.PDFTranscoder;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static com.mikescher.xamarinforms.resourcebuilder.FileIO.cs;
 import static com.mikescher.xamarinforms.resourcebuilder.FileIO.readUTF8TextFile;
 import static com.mikescher.xamarinforms.resourcebuilder.PNGUtil.getHeightFromPNG;
 import static com.mikescher.xamarinforms.resourcebuilder.PNGUtil.getWidthFromPNG;
 import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.*;
-import static com.mikescher.xamarinforms.resourcebuilder.SVGUtil.un_dp;
 
-public class Converter
+@SuppressWarnings("DuplicatedCode")
+class Converter
 {
-    public static Tuple2<IConverter, IConverterTypeStr> RASTER_TO_PNG  = Tuple2.Create(Converter::convertRasterToPNG,  Converter::getTypeStrRasterToPNG);
-    public static Tuple2<IConverter, IConverterTypeStr> RASTER_TO_JPEG = Tuple2.Create(Converter::convertRasterToJPEG, Converter::getTypeStrRasterToJPEG);
-    public static Tuple2<IConverter, IConverterTypeStr> SVG_TO_PNG     = Tuple2.Create(Converter::convertSVGToPNG,     Converter::getTypeStrSVGToPNG);
-    public static Tuple2<IConverter, IConverterTypeStr> SVG_TO_PDF     = Tuple2.Create(Converter::convertSVGToPDF,     Converter::getTypeStrSVGToPDF);
-    public static Tuple2<IConverter, IConverterTypeStr> SVG_TO_VECTOR  = Tuple2.Create(Converter::convertSVGToVector,  Converter::getTypeStrSVGToVector);
+    static Tuple2<IConverter, IConverterTypeStr> RASTER_TO_PNG  = Tuple2.Create(Converter::convertRasterToPNG,  Converter::getTypeStrRasterToPNG);
+    static Tuple2<IConverter, IConverterTypeStr> RASTER_TO_JPEG = Tuple2.Create(Converter::convertRasterToJPEG, Converter::getTypeStrRasterToJPEG);
+    static Tuple2<IConverter, IConverterTypeStr> SVG_TO_PNG     = Tuple2.Create(Converter::convertSVGToPNG,     Converter::getTypeStrSVGToPNG);
+    static Tuple2<IConverter, IConverterTypeStr> SVG_TO_PDF     = Tuple2.Create(Converter::convertSVGToPDF,     Converter::getTypeStrSVGToPDF);
+    static Tuple2<IConverter, IConverterTypeStr> SVG_TO_VECTOR  = Tuple2.Create(Converter::convertSVGToVector,  Converter::getTypeStrSVGToVector);
 
-    public static String getTypeStrRasterToPNG(HashMap<String, String> parameter)
+    private static String getTypeStrRasterToPNG(HashMap<String, String> parameter)
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
         return StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24);
     }
 
-    public static File convertRasterToPNG(File input, HashMap<String, String> parameter) throws Exception
+    private static File convertRasterToPNG(File input, HashMap<String, String> parameter) throws Exception
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
@@ -61,14 +63,14 @@ public class Converter
         return f_tmp;
     }
 
-    public static String getTypeStrRasterToJPEG(HashMap<String, String> parameter)
+    private static String getTypeStrRasterToJPEG(HashMap<String, String> parameter)
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
         return StringUtils.rightPad("JPEG @ "+ww+"x"+hh+"", 24);
     }
 
-    public static File convertRasterToJPEG(File input, HashMap<String, String> parameter) throws Exception
+    private static File convertRasterToJPEG(File input, HashMap<String, String> parameter) throws Exception
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
@@ -92,14 +94,14 @@ public class Converter
         return f_tmp;
     }
 
-    public static String getTypeStrSVGToPNG(HashMap<String, String> parameter)
+    private static String getTypeStrSVGToPNG(HashMap<String, String> parameter)
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
         return StringUtils.rightPad("PNG @ "+ww+"x"+hh+"", 24);
     }
 
-    public static File convertSVGToPNG(File input, HashMap<String, String> parameter) throws Exception
+    private static File convertSVGToPNG(File input, HashMap<String, String> parameter) throws Exception
     {
         int ww = Integer.parseInt(parameter.get("width"));
         int hh = Integer.parseInt(parameter.get("height"));
@@ -119,23 +121,22 @@ public class Converter
         return f_tmp;
     }
 
-    public static String getTypeStrSVGToVector(HashMap<String, String> parameter)
+    private static String getTypeStrSVGToVector(HashMap<String, String> parameter)
     {
         String ww = parameter.get("width");
         String hh = parameter.get("height");
         return StringUtils.rightPad("XML @ "+ww+"x"+hh+"", 24);
     }
 
-    public static File convertSVGToVector(File input, HashMap<String, String> parameter) throws Exception
+    private static File convertSVGToVector(File input, HashMap<String, String> parameter) throws Exception
     {
         String ww = parameter.get("width");
         String hh = parameter.get("height");
 
-        File f_in = input;
         File f_tmp_dir = Paths.get(System.getProperty("java.io.tmpdir"), "xfrb_" + UUID.randomUUID()).toFile();
-        f_tmp_dir.mkdirs();
+        if (!f_tmp_dir.mkdirs()) throw new Exception("Could not mkdir");
         f_tmp_dir.deleteOnExit();
-        File f_tmp_file = Paths.get(f_tmp_dir.getAbsolutePath(), f_in.getName().replace(".svg", ".xml")).toFile();
+        File f_tmp_file = Paths.get(f_tmp_dir.getAbsolutePath(), input.getName().replace(".svg", ".xml")).toFile();
         f_tmp_file.deleteOnExit();
 
         Tuple3<Integer, String, String> r;
@@ -153,12 +154,12 @@ public class Converter
         return f_tmp_file;
     }
 
-    public static String getTypeStrSVGToPDF(HashMap<String, String> parameter)
+    private static String getTypeStrSVGToPDF(HashMap<String, String> parameter)
     {
         return StringUtils.rightPad("PDF", 24);
     }
 
-    public static File convertSVGToPDF(File input, HashMap<String, String> parameter) throws Exception
+    private static File convertSVGToPDF(File input, HashMap<String, String> parameter) throws Exception
     {
         File f_tmp = File.createTempFile("xfrb_3_", ".pdf");
         f_tmp.deleteOnExit();

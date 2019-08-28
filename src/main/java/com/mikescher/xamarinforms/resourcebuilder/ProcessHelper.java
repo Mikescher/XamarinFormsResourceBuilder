@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class ProcessHelper {
+class ProcessHelper {
 
 	private static class StreamGobbler extends Thread
 	{
@@ -13,7 +13,7 @@ public class ProcessHelper {
 
 		private InputStream is;
 
-		public StreamGobbler(InputStream is)
+		StreamGobbler(InputStream is)
 		{
 			this.is = is;
 			this.result = new StringBuilder();
@@ -38,21 +38,22 @@ public class ProcessHelper {
 				}
 			} catch (Exception ioe)
 			{
+				//noinspection ThrowablePrintedToSystemOut
 				System.err.println(ioe);
 			}
 		}
 
-		public String get() {
+		String get() {
 			if (isAlive()) return "";
 			return result.toString();
 		}
 
-		public void waitFor() {
+		void waitFor() {
 			while (this.isAlive()) ThreadUtils.safeSleep(1);
 		}
 	}
 
-	public static Tuple3<Integer, String, String> procExec(String cmd, String... args) throws IOException
+	static Tuple3<Integer, String, String> procExec(String cmd, String... args) throws IOException
 	{
 		Runtime rt = Runtime.getRuntime();
 		String[] commands = new String[args.length+1];

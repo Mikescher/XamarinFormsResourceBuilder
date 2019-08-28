@@ -8,41 +8,40 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileIO {
-    public final static Charset CHARSET_UTF8 = StandardCharsets.UTF_8; //$NON-NLS-1$
+class FileIO {
+    private final static Charset CHARSET_UTF8 = StandardCharsets.UTF_8; //$NON-NLS-1$
 
-    public final static String LINE_END = System.getProperty("line.separator"); //$NON-NLS-1$
+    private final static String LINE_END = System.getProperty("line.separator"); //$NON-NLS-1$
 
 
-    public static String readUTF8TextFile(File file) throws IOException {
+    static String readUTF8TextFile(File file) throws IOException {
         FileInputStream stream;
         String result = readUTF8TextFile(stream = new FileInputStream(file));
         stream.close();
         return result;
     }
 
-    public static List<String> readUTF8TextFileLines(String file) throws IOException {
+    static List<String> readUTF8TextFileLines(String file) throws IOException {
         String str = readUTF8TextFile(new File(file));
         String[] arr = str.split("\\r?\\n");
         List<String> ls = new ArrayList<>();
 
-        for (int i = 0; i < arr.length; i++)
-        {
-            if (arr[i].isEmpty()) continue;
-            ls.add(arr[i]);
+        for (String s : arr) {
+            if (s.isEmpty()) continue;
+            ls.add(s);
         }
         return ls;
     }
 
-    public static String readUTF8TextFile(FileInputStream file) throws IOException {
+    static String readUTF8TextFile(FileInputStream file) throws IOException {
         return readTextFile(new InputStreamReader(file, CHARSET_UTF8));
     }
 
-    public static String readTextFile(InputStreamReader reader) throws IOException {
+    private static String readTextFile(InputStreamReader reader) throws IOException {
         return readTextFile(new BufferedReader(reader));
     }
 
-    public static String readTextFile(BufferedReader reader) throws IOException {
+    private static String readTextFile(BufferedReader reader) throws IOException {
         StringBuilder content = new StringBuilder();
         boolean first = true;
 
@@ -64,11 +63,11 @@ public class FileIO {
         return content.toString();
     }
 
-    public static void writeTextFile(String filename, String text) throws IOException {
+    static void writeTextFile(String filename, String text) throws IOException {
         writeTextFile(new File(filename), text);
     }
 
-    public static void writeTextFile(File file, String text) throws IOException {
+    static void writeTextFile(File file, String text) throws IOException {
         FileOutputStream fos;
         OutputStreamWriter osw;
         BufferedWriter bw = null;
@@ -86,14 +85,29 @@ public class FileIO {
         }
     }
 
-    public static String cs(File f) throws IOException {
+    static String cs(File f) throws IOException {
+
+        if (getFileExtension(f).toLowerCase().equals("svg") || getFileExtension(f).toLowerCase().equals("xml")) {
+            String str = readUTF8TextFile(f);
+            str = str.replace("\r\n", "");
+            str = str.replace("\r", "");
+            str = str.replace("\n", "");
+            return cs(str);
+        }
+
         String checksum;
         try (FileInputStream fis = new FileInputStream(f)) { checksum = DigestUtils.sha256Hex(fis).toUpperCase(); }
         return checksum;
     }
 
-    public static String cs(String s) throws IOException {
+    static String cs(String s) {
         return DigestUtils.sha256Hex(s).toUpperCase();
     }
 
+    private static String getFileExtension(File file) {
+        String fileName = file.getName();
+        if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
+            return fileName.substring(fileName.lastIndexOf(".")+1);
+        else return "";
+    }
 }
