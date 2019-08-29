@@ -2,6 +2,7 @@ package com.mikescher.xamarinforms.resourcebuilder;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.DirectoryScanner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -57,10 +58,10 @@ public class Main {
                 ? Paths.get(dir, root.getAttribute("vd-tool-win")).toAbsolutePath().toString()
                 : Paths.get(dir, root.getAttribute("vd-tool-nix")).toAbsolutePath().toString();
 
-        File f_lock = Paths.get(dir, root.getAttribute("lockfile")).toFile();
+        File f_lock = root.hasAttribute("lockfile") ? Paths.get(dir, root.getAttribute("lockfile")).toFile() : null;
 
         lockdata = new HashMap<>();
-        if (f_lock.exists())
+        if (f_lock != null && f_lock.exists())
         {
             for (String s : FileIO.readUTF8TextFileLines(f_lock.getAbsolutePath()))
             {
@@ -74,7 +75,7 @@ public class Main {
         {
             Element fileNode = (Element)fileNodes.item(i);
 
-            String filepath = Paths.get(dir, fileNode.getAttribute("path")).toAbsolutePath().toString() ;
+            String filepath = Paths.get(dir, fileNode.getAttribute("path")).toAbsolutePath().toString();
 
             System.out.println("[CONVERT] " + new File(filepath).getName());
 
@@ -85,11 +86,45 @@ public class Main {
                 String outputpath = Paths.get(dir, outroot, outputNode.getAttribute("path")).toAbsolutePath().toString() ;
 
                 run(filepath, outputNode, outputpath, fileNode.getAttribute("path"), outputNode.getAttribute("path"));
-
             }
 
             System.out.println();
             ThreadUtils.safeSleep(150);
+        }
+
+        NodeList wildcardNodes = root.getElementsByTagName("wildcard");
+        for (int i = 0; i < wildcardNodes.getLength(); i++)
+        {
+            Element wildcardNode = (Element)wildcardNodes.item(i);
+
+            String wildpath = wildcardNode.getAttribute("path");
+            if (!wildpath.startsWith("**/")) wildpath = "**/" + wildpath;
+
+            DirectoryScanner scanner = new DirectoryScanner();
+            scanner.setIncludes(new String[]{ wildpath });
+            scanner.setBasedir(dir);
+            scanner.setCaseSensitive(false);
+            scanner.scan();
+            String[] files = scanner.getIncludedFiles();
+
+            for (String realfilename : files)
+            {
+                String realfilepath = Paths.get(dir, realfilename).toAbsolutePath().toString();
+
+                System.out.println("[CONVERT] " + new File(realfilepath).getName());
+
+                NodeList outputNodes = wildcardNode.getElementsByTagName("output");
+                for (int j = 0; j < outputNodes.getLength(); j++)
+                {
+                    Element outputNode = (Element)outputNodes.item(j);
+                    String outputpath = Paths.get(dir, outroot, outputNode.getAttribute("path")).toAbsolutePath().toString() ;
+
+                    run(realfilepath, outputNode, outputpath, wildcardNode.getAttribute("path"), outputNode.getAttribute("path"));
+                }
+
+                System.out.println();
+                ThreadUtils.safeSleep(50);
+            }
         }
 
         System.out.println("[WRITING LOCK]");
@@ -104,7 +139,7 @@ public class Main {
                         .append(StringUtils.rightPad(e.getKey().Item2, p2))
                         .append("\t")
                         .append(e.getValue()).append("\n");
-            writeTextFile(f_lock, lockdatabuilder.toString());
+            if (f_lock != null) writeTextFile(f_lock, lockdatabuilder.toString());
         }
         System.out.println("[FINISHED]");
 
@@ -256,7 +291,7 @@ public class Main {
         if (xnew.length() < 8) {
             throw new Exception("Conversion resulted in empty file");
         } else if (xold.isEmpty()) {
-            if (!new File(output).delete()) throw new Exception("File delete failed");
+            if (new File(output).exists() && !new File(output).delete()) throw new Exception("File delete failed");
             if (!resultFile.renameTo(new File(output))) throw new Exception("File renameTo failed");
             System.out.println("[#] " + resultName + "  --  File created");
             setLockdata(input, output, parameter, rawinput, rawoutput);
