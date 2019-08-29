@@ -11,8 +11,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.mikescher.xamarinforms.resourcebuilder.FileIO.cs;
 import static com.mikescher.xamarinforms.resourcebuilder.FileIO.writeTextFile;
@@ -132,7 +134,7 @@ public class Main {
             int p1 = 3 + lockdata_new.keySet().stream().map(s -> s.Item1.length()).max(Integer::compareTo).orElse(0);
             int p2 = 3 + lockdata_new.keySet().stream().map(s -> s.Item2.length()).max(Integer::compareTo).orElse(0);
             StringBuilder lockdatabuilder = new StringBuilder();
-            for (Map.Entry<Tuple2<String, String>, String> e : lockdata_new.entrySet())
+            for (Map.Entry<Tuple2<String, String>, String> e : lockdata_new.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().Item1)).collect(Collectors.toList()))
                 lockdatabuilder
                         .append(StringUtils.rightPad(e.getKey().Item1, p1))
                         .append("\t")
