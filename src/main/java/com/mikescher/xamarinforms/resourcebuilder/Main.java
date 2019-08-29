@@ -13,6 +13,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -133,8 +134,19 @@ public class Main {
         {
             int p1 = 3 + lockdata_new.keySet().stream().map(s -> s.Item1.length()).max(Integer::compareTo).orElse(0);
             int p2 = 3 + lockdata_new.keySet().stream().map(s -> s.Item2.length()).max(Integer::compareTo).orElse(0);
+
+            @SuppressWarnings("unchecked")
+            List<Map.Entry<Tuple2<String, String>, String>> ld_sorted = lockdata_new
+                    .entrySet()
+                    .stream()
+                    .sorted(
+                            Comparator
+                                    .comparing(e -> ((Map.Entry<Tuple2<String, String>, String>)e).getKey().Item1)
+                                    .thenComparing(e -> ((Map.Entry<Tuple2<String, String>, String>)e).getKey().Item2))
+                    .collect(Collectors.toList());
+
             StringBuilder lockdatabuilder = new StringBuilder();
-            for (Map.Entry<Tuple2<String, String>, String> e : lockdata_new.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().Item1)).collect(Collectors.toList()))
+            for (Map.Entry<Tuple2<String, String>, String> e : ld_sorted)
                 lockdatabuilder
                         .append(StringUtils.rightPad(e.getKey().Item1, p1))
                         .append("\t")

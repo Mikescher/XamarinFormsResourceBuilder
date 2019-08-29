@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.mikescher'
-version '1.13'
+version '1.14'
 
 sourceCompatibility = 1.8
 
