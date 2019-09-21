@@ -1,11 +1,11 @@
-package com.mikescher.xamarinforms.resourcebuilder;
+package com.mikescher.xamarinforms.resourcebuilder.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-class ProcessHelper {
+public class ProcessHelper {
 
 	private static class StreamGobbler extends Thread
 	{
@@ -53,7 +53,7 @@ class ProcessHelper {
 		}
 	}
 
-	static Tuple3<Integer, String, String> procExec(String cmd, String... args) throws IOException
+	public static Tuple3<Integer, String, String> procExec(String cmd, String... args) throws IOException
 	{
 		Runtime rt = Runtime.getRuntime();
 		String[] commands = new String[args.length+1];

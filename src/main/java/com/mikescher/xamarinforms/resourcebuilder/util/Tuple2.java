@@ -1,17 +1,17 @@
-package com.mikescher.xamarinforms.resourcebuilder;
+package com.mikescher.xamarinforms.resourcebuilder.util;
 
 import java.util.Objects;
 
 public class Tuple2<T1, T2> {
-	final T1 Item1;
-	final T2 Item2;
+	public final T1 Item1;
+	public final T2 Item2;
 
 	private Tuple2(T1 i1, T2 i2) {
 		this.Item1 = i1;
 		this.Item2 = i2;
 	}
 
-	static <T1, T2> Tuple2<T1, T2> Create(T1 i1, T2 i2) {
+	public static <T1, T2> Tuple2<T1, T2> Create(T1 i1, T2 i2) {
 		return new Tuple2<>(i1, i2);
 	}
 

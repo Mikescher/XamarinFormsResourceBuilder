@@ -1,11 +1,11 @@
-package com.mikescher.xamarinforms.resourcebuilder;
+package com.mikescher.xamarinforms.resourcebuilder.util;
 
 import java.util.Objects;
 
 public class Tuple3<T1, T2, T3> {
-	final T1 Item1;
-	final T2 Item2;
-	final T3 Item3;
+	public final T1 Item1;
+	public final T2 Item2;
+	public final T3 Item3;
 
 	private Tuple3(T1 i1, T2 i2, T3 i3) {
 		this.Item1 = i1;

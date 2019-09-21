@@ -1,4 +1,4 @@
-package com.mikescher.xamarinforms.resourcebuilder;
+package com.mikescher.xamarinforms.resourcebuilder.util;
 
 import javax.imageio.ImageIO;
 import java.io.File;

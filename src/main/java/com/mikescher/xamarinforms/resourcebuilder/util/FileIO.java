@@ -1,6 +1,8 @@
-package com.mikescher.xamarinforms.resourcebuilder;
+package com.mikescher.xamarinforms.resourcebuilder.util;
 
+import com.mikescher.xamarinforms.resourcebuilder.env.RunEnvironment;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.tools.ant.DirectoryScanner;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -8,20 +10,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-class FileIO {
+public class FileIO {
     private final static Charset CHARSET_UTF8 = StandardCharsets.UTF_8; //$NON-NLS-1$
 
     private final static String LINE_END = System.getProperty("line.separator"); //$NON-NLS-1$
 
-
-    static String readUTF8TextFile(File file) throws IOException {
+    public static String readUTF8TextFile(File file) throws IOException {
         FileInputStream stream;
         String result = readUTF8TextFile(stream = new FileInputStream(file));
         stream.close();
         return result;
     }
 
-    static List<String> readUTF8TextFileLines(String file) throws IOException {
+    public static List<String> readUTF8TextFileLines(String file) throws IOException {
         String str = readUTF8TextFile(new File(file));
         String[] arr = str.split("\\r?\\n");
         List<String> ls = new ArrayList<>();
@@ -33,7 +34,7 @@ class FileIO {
         return ls;
     }
 
-    static String readUTF8TextFile(FileInputStream file) throws IOException {
+    public static String readUTF8TextFile(FileInputStream file) throws IOException {
         return readTextFile(new InputStreamReader(file, CHARSET_UTF8));
     }
 
@@ -63,11 +64,11 @@ class FileIO {
         return content.toString();
     }
 
-    static void writeTextFile(String filename, String text) throws IOException {
+    public static void writeTextFile(String filename, String text) throws IOException {
         writeTextFile(new File(filename), text);
     }
 
-    static void writeTextFile(File file, String text) throws IOException {
+    public static void writeTextFile(File file, String text) throws IOException {
         FileOutputStream fos;
         OutputStreamWriter osw;
         BufferedWriter bw = null;
@@ -85,7 +86,7 @@ class FileIO {
         }
     }
 
-    static String cs(File f) throws IOException {
+    public static String cs(File f) throws IOException {
 
         if (getFileExtension(f).toLowerCase().equals("svg") || getFileExtension(f).toLowerCase().equals("xml")) {
             String str = readUTF8TextFile(f);
@@ -100,14 +101,37 @@ class FileIO {
         return checksum;
     }
 
-    static String cs(String s) {
+    public static String cs(String s) {
         return DigestUtils.sha256Hex(s).toUpperCase();
     }
 
-    private static String getFileExtension(File file) {
+    public static String getFileExtension(File file) {
         String fileName = file.getName();
         if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
             return fileName.substring(fileName.lastIndexOf(".")+1);
         else return "";
+    }
+
+    public static String getFileExtension(String file) {
+        String fileName = new File(file).getName();
+        if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
+            return fileName.substring(fileName.lastIndexOf(".")+1);
+        else return "";
+    }
+
+    public static List<String> listWildcardFiles(RunEnvironment env, String wildpath)
+    {
+        if (!wildpath.startsWith("**/")) wildpath = "**/" + wildpath;
+
+        DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setIncludes(new String[]{ wildpath });
+        scanner.setBasedir(env.RunDirectory);
+        scanner.setCaseSensitive(false);
+        scanner.scan();
+        String[] files = scanner.getIncludedFiles();
+
+        List<String> r = new ArrayList<>();
+        for (String realfilename : files) r.add(env.getPathInRunDirectory(realfilename));
+        return r;
     }
 }
