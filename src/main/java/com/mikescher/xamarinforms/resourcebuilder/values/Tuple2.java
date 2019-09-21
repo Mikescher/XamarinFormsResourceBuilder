@@ -1,20 +1,18 @@
-package com.mikescher.xamarinforms.resourcebuilder.util;
+package com.mikescher.xamarinforms.resourcebuilder.values;
 
 import java.util.Objects;
 
-public class Tuple3<T1, T2, T3> {
+public class Tuple2<T1, T2> {
 	public final T1 Item1;
 	public final T2 Item2;
-	public final T3 Item3;
 
-	private Tuple3(T1 i1, T2 i2, T3 i3) {
+	private Tuple2(T1 i1, T2 i2) {
 		this.Item1 = i1;
 		this.Item2 = i2;
-		this.Item3 = i3;
 	}
 
-	static <T1, T2, T3> Tuple3<T1, T2, T3> Create(T1 i1, T2 i2, T3 i3) {
-		return new Tuple3<>(i1, i2, i3);
+	public static <T1, T2> Tuple2<T1, T2> Create(T1 i1, T2 i2) {
+		return new Tuple2<>(i1, i2);
 	}
 
 	@Override
@@ -23,9 +21,9 @@ public class Tuple3<T1, T2, T3> {
 		
 		if (o == this) return true;
 
-		if (! (o instanceof Tuple3<?, ?, ?>)) return false;
+		if (! (o instanceof Tuple2<?, ?>)) return false;
 		
-		Tuple3<?, ?, ?> other = (Tuple3<?, ?, ?>) o;
+		Tuple2<?, ?> other = (Tuple2<?, ?>) o;
 		
 		if (other.Item1 == null && Item1 != null) return false;
 		if (other.Item1 == null) return false;
@@ -33,17 +31,13 @@ public class Tuple3<T1, T2, T3> {
 
 		if (other.Item2 == null && Item2 != null) return false;
 		if (other.Item2 == null) return false;
-		if (! other.Item2.equals(Item2)) return false;
 
-		if (other.Item3 == null && Item3 != null) return false;
-		if (other.Item3 == null) return false;
-
-		return other.Item3.equals(Item3);
+		return other.Item2.equals(Item2);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(Item1, Item2, Item3);
+		return Objects.hash(Item1, Item2);
 	}
 
 	@Override
@@ -55,11 +49,7 @@ public class Tuple3<T1, T2, T3> {
 		String s2 = "NULL";
 		if (Item2 != null) s2 = Item2.toString();
 
-		String s3 = "NULL";
-		if (Item3 != null) s3 = Item3.toString();
-		
-		
-		return "<" + s1 + ", " + s2 + ", " + s3 + ">";
+		return "<" + s1 + ", " + s2 + ">";
 	}
 
 }

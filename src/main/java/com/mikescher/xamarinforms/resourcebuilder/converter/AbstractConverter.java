@@ -3,7 +3,7 @@ package com.mikescher.xamarinforms.resourcebuilder.converter;
 import com.mikescher.xamarinforms.resourcebuilder.Main;
 import com.mikescher.xamarinforms.resourcebuilder.env.RunEnvironment;
 import com.mikescher.xamarinforms.resourcebuilder.util.FileIO;
-import com.mikescher.xamarinforms.resourcebuilder.util.Tuple2;
+import com.mikescher.xamarinforms.resourcebuilder.values.Tuple2;
 import com.mikescher.xamarinforms.resourcebuilder.values.FittingType;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;

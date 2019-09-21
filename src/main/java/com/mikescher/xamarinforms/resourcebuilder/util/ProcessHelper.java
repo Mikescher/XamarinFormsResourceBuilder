@@ -1,5 +1,7 @@
 package com.mikescher.xamarinforms.resourcebuilder.util;
 
+import com.mikescher.xamarinforms.resourcebuilder.values.Tuple3;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

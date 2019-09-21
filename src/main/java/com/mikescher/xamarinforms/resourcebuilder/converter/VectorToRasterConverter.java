@@ -3,15 +3,12 @@ package com.mikescher.xamarinforms.resourcebuilder.converter;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGUniverse;
 import com.mikescher.xamarinforms.resourcebuilder.env.RunEnvironment;
-import com.mikescher.xamarinforms.resourcebuilder.util.IntRect;
+import com.mikescher.xamarinforms.resourcebuilder.values.IntRect;
 import com.mikescher.xamarinforms.resourcebuilder.util.SVGUtil;
 import com.mikescher.xamarinforms.resourcebuilder.values.FittingType;
-import com.mortennobel.imagescaling.ResampleFilters;
-import com.mortennobel.imagescaling.ResampleOp;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
-import org.apache.fop.svg.PDFTranscoder;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

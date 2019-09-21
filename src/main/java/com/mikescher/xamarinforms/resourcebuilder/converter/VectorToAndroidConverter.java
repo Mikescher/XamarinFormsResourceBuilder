@@ -4,7 +4,7 @@ import com.mikescher.xamarinforms.resourcebuilder.env.RunEnvironment;
 import com.mikescher.xamarinforms.resourcebuilder.util.FileIO;
 import com.mikescher.xamarinforms.resourcebuilder.util.ProcessHelper;
 import com.mikescher.xamarinforms.resourcebuilder.util.SVGUtil;
-import com.mikescher.xamarinforms.resourcebuilder.util.Tuple3;
+import com.mikescher.xamarinforms.resourcebuilder.values.Tuple3;
 import com.mikescher.xamarinforms.resourcebuilder.values.FittingType;
 
 import java.awt.*;

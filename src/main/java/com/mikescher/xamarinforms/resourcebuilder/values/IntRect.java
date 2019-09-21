@@ -1,4 +1,4 @@
-package com.mikescher.xamarinforms.resourcebuilder.util;
+package com.mikescher.xamarinforms.resourcebuilder.values;
 
 public class IntRect
 {

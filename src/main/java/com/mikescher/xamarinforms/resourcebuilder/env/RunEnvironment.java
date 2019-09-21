@@ -1,7 +1,7 @@
 package com.mikescher.xamarinforms.resourcebuilder.env;
 
 import com.mikescher.xamarinforms.resourcebuilder.util.FileIO;
-import com.mikescher.xamarinforms.resourcebuilder.util.Tuple2;
+import com.mikescher.xamarinforms.resourcebuilder.values.Tuple2;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Element;
 
@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 public class RunEnvironment

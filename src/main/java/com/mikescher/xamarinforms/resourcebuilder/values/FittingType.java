@@ -1,7 +1,5 @@
 package com.mikescher.xamarinforms.resourcebuilder.values;
 
-import com.mikescher.xamarinforms.resourcebuilder.util.IntRect;
-
 public enum FittingType
 {
     STRETCH("stretch"),
@@ -40,7 +38,7 @@ public enum FittingType
             {
                 double relInput  = (inputWidth * 1.0)  / (inputHeight * 1.0);
                 double relOutput = (outputWidth - 2.0 * margin) / (outputHeight - 2.0 * margin);
-                if (relInput < relOutput)
+                if (relInput > relOutput)
                 {
                     int w = outputWidth - 2 * margin;
                     int h = (int)Math.round(w/relInput);

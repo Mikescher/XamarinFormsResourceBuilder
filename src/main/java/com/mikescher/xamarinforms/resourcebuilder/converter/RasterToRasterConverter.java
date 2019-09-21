@@ -1,7 +1,7 @@
 package com.mikescher.xamarinforms.resourcebuilder.converter;
 
 import com.mikescher.xamarinforms.resourcebuilder.env.RunEnvironment;
-import com.mikescher.xamarinforms.resourcebuilder.util.IntRect;
+import com.mikescher.xamarinforms.resourcebuilder.values.IntRect;
 import com.mikescher.xamarinforms.resourcebuilder.values.FittingType;
 import com.mortennobel.imagescaling.ResampleFilters;
 import com.mortennobel.imagescaling.ResampleOp;
