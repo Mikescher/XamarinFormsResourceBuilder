@@ -53,7 +53,7 @@ public abstract class RasterToRasterConverter extends AbstractConverter
 
         if (ParameterMargin          != 0)                   result.put("margin",     Integer.toString(ParameterMargin));
         if (ParameterFitting         != FittingType.STRETCH) result.put("fitting",    ParameterFitting.toString());
-        if (ParameterBackgroundColor != TRANSPARENT)         result.put("background", ParameterBackgroundColor.toString());
+        if (ParameterBackgroundColor != TRANSPARENT)         result.put("background", colorToString(ParameterBackgroundColor));
 
         return result;
     }

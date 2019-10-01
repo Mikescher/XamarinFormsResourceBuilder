@@ -12,6 +12,7 @@ import org.w3c.dom.Element;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +62,7 @@ public abstract class AbstractConverter
 
         if (outputXMLNode.hasAttribute("fitting"))          setFitting(FittingType.get(outputXMLNode.getAttribute("fitting")));
         if (outputXMLNode.hasAttribute("margin"))           setMargin(Integer.parseInt(outputXMLNode.getAttribute("margin")));
-        if (outputXMLNode.hasAttribute("background_color")) setBackgroundColor(Color.decode(outputXMLNode.getAttribute("background_color")));
+        if (outputXMLNode.hasAttribute("background_color")) setBackgroundColor(decodeColor(outputXMLNode.getAttribute("background_color")));
 
         OutputFile = doPathReplacements(env.getPathInOutputDirectory(SuppliedOutputFile));
 
@@ -109,6 +110,34 @@ public abstract class AbstractConverter
             updateLockData(env);
                 env.Count_Changed++;
         }
+    }
+
+    private Color decodeColor(String str) throws NoSuchFieldException, IllegalAccessException {
+        String inv = str;
+
+        if (!str.startsWith("#")) return (Color)Color.class.getField(str.toLowerCase()).get(null);
+        str = str.substring(1);
+
+        if (str.length() == 3) {
+            str = ""+str.charAt(0)+""+str.charAt(0)+""+str.charAt(1)+""+str.charAt(1)+""+str.charAt(2)+""+str.charAt(2)+"FF";
+        } else if (str.length() == 6) {
+            str = str+"FF";
+        }
+
+        if (str.length() == 8) {
+
+            int r = Integer.parseInt(str.substring(0, 2), 16);
+            int g = Integer.parseInt(str.substring(2, 4), 16);
+            int b = Integer.parseInt(str.substring(4, 6), 16);
+            int a = Integer.parseInt(str.substring(6, 8), 16);
+
+            return new Color(r, g, b, a);
+
+        } else {
+            throw new IllegalArgumentException("Value '"+inv+"' is not a valid color");
+        }
+
+
     }
 
     protected void setHeight(String value) throws Exception {
@@ -201,6 +230,10 @@ public abstract class AbstractConverter
         data.put("height", Integer.toString(OutputHeight));
 
         return data;
+    }
+
+    protected String colorToString(Color col) {
+        return MessageFormat.format("[{0}|{1}|{2} - {3}]", col.getRed(), col.getGreen(), col.getBlue(), col.getAlpha());
     }
 
     protected abstract double getInputWidthDouble(File file) throws Exception;

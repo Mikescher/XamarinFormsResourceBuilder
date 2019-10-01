@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 public class RunEnvironment
 {
+    public int SleepTime;
+
     public File LockFile;
     public HashMap<Tuple2<String, String>, String> LockDataFile = new HashMap<>();
     public HashMap<Tuple2<String, String>, String> LockDataNew  = new HashMap<>();
@@ -42,6 +44,8 @@ public class RunEnvironment
     {
         RunDirectory       = parent;
         RelativeOutputRoot = root.getAttribute("outputroot");
+
+        SleepTime = root.hasAttribute("sleep") ? Integer.parseInt(root.getAttribute("sleep")) : 50;
 
         VDTPath = System.getProperty("os.name").toLowerCase().contains("win")
                 ? getPathInRunDirectory(root.getAttribute("vd-tool-win"))

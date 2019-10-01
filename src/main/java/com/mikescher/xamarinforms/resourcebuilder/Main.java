@@ -53,7 +53,7 @@ public class Main {
             }
 
             System.out.println();
-            ThreadUtils.safeSleep(150);
+            if (env.SleepTime>0) ThreadUtils.safeSleep(env.SleepTime);
         }
 
         NodeList wildcardNodes = root.getElementsByTagName("wildcard");
@@ -74,7 +74,7 @@ public class Main {
                 }
 
                 System.out.println();
-                ThreadUtils.safeSleep(50);
+                if (env.SleepTime>0) ThreadUtils.safeSleep(env.SleepTime);
             }
         }
 
