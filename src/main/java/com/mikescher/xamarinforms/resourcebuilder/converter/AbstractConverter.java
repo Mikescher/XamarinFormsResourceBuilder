@@ -108,7 +108,7 @@ public abstract class AbstractConverter
             if (! intermediateFile.renameTo(new File(OutputFile))) throw new Exception("File renameTo failed");
             System.out.println("[#] " + display + "  --  File changed");
             updateLockData(env);
-                env.Count_Changed++;
+            env.Count_Changed++;
         }
     }
 

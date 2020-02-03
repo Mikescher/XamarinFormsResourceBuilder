@@ -70,7 +70,9 @@ public class Main {
                     Element outputNode = (Element)outputNodes.item(j);
                     String outputpath  = env.getPathInOutputDirectory(outputNode.getAttribute("path"));
 
-                    getConverter(realfilepath, outputpath).run(env, realfilepath, wildcardNode.getAttribute("path"), outputNode);
+                    String relativeRealPath = new File(env.RunDirectory).toURI().relativize(new File(realfilepath).toURI()).getPath();
+
+                    getConverter(realfilepath, outputpath).run(env, realfilepath, relativeRealPath, outputNode);
                 }
 
                 System.out.println();
