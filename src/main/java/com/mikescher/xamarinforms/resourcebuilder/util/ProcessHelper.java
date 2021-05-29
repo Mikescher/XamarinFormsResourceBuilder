@@ -55,13 +55,13 @@ public class ProcessHelper {
 		}
 	}
 
-	public static Tuple3<Integer, String, String> procExec(String cmd, String... args) throws IOException
+	public static Tuple3<Integer, String, String> procExec(String cmd, String[] env, String... args) throws IOException
 	{
 		Runtime rt = Runtime.getRuntime();
 		String[] commands = new String[args.length+1];
 		commands[0] = cmd;
 		System.arraycopy(args, 0, commands, 1, args.length);
-		Process proc = rt.exec(commands);
+		Process proc = rt.exec(commands, env);
 
 		StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream());
 		StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream());

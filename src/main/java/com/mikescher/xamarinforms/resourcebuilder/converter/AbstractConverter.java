@@ -5,6 +5,7 @@ import com.mikescher.xamarinforms.resourcebuilder.env.RunEnvironment;
 import com.mikescher.xamarinforms.resourcebuilder.util.FileIO;
 import com.mikescher.xamarinforms.resourcebuilder.values.Tuple2;
 import com.mikescher.xamarinforms.resourcebuilder.values.FittingType;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Element;
@@ -12,6 +13,8 @@ import org.w3c.dom.Element;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -90,14 +93,14 @@ public abstract class AbstractConverter
         else if (xold.isEmpty())
         {
             if (new File(OutputFile).exists() && !new File(OutputFile).delete()) throw new Exception("File delete failed");
-            if (!intermediateFile.renameTo(new File(OutputFile))) throw new Exception("File renameTo failed");
+            Files.move(intermediateFile.toPath(), new File(OutputFile).toPath());
             System.out.println("[#] " + display + "  --  File created");
             updateLockData(env);
             env.Count_Created++;
         }
         else if (xold.equals(xnew))
         {
-            if (!intermediateFile.delete()) throw new Exception("File delete failed");
+            if (!intermediateFile.delete()) throw new Exception("File delete failed ('"+intermediateFile.getAbsolutePath()+"')");
             System.out.println("[/] " + display + "  --  No changes");
             updateLockData(env);
             env.Count_NoChanges++;
@@ -105,7 +108,7 @@ public abstract class AbstractConverter
         else
         {
             if (!new File(OutputFile).delete()) throw new Exception("File delete failed");
-            if (! intermediateFile.renameTo(new File(OutputFile))) throw new Exception("File renameTo failed");
+            Files.move(intermediateFile.toPath(), new File(OutputFile).toPath());
             System.out.println("[#] " + display + "  --  File changed");
             updateLockData(env);
             env.Count_Changed++;

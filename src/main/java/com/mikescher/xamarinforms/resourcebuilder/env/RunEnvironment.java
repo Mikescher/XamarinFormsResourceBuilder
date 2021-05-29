@@ -28,6 +28,8 @@ public class RunEnvironment
     public String VDTPath;
     public String SVGRasterizer;
 
+    public String JavaHomeOverride = null;
+
     public long StartTime;
 
     public int Count_NotNeeded = 0;
@@ -54,6 +56,12 @@ public class RunEnvironment
         SVGRasterizer = root.hasAttribute("svg_rasterizer")
                 ? root.getAttribute("svg_rasterizer")
                 : "Unset";
+
+        String home = System.getenv("JAVA_ORACLE_HOME");
+        if (!home.equals("")) {
+            JavaHomeOverride = home;
+            System.out.println("[#] Set VDT JAVA_HOME to '"+JavaHomeOverride+"'");
+        }
 
         if (root.hasAttribute("lockfile"))
         {

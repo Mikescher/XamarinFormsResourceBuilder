@@ -52,14 +52,18 @@ public class VectorToAndroidConverter extends AbstractConverter {
         File f_tmp_file = Paths.get(f_tmp_dir.getAbsolutePath(), new File(InputFile).getName().replace(".svg", ".xml")).toFile();
         f_tmp_file.deleteOnExit();
 
+        String[] procEnv = new String[0];
+
+        if (env.JavaHomeOverride != null) procEnv = new String[]{ "JAVA_HOME=" + env.JavaHomeOverride };
+
         Tuple3<Integer, String, String> r;
         if (OutputWidth == InputWidth && OutputHeight == InputHeight) {
-            r = ProcessHelper.procExec(env.VDTPath,
+            r = ProcessHelper.procExec(env.VDTPath, procEnv,
                     "-in", new File(InputFile).getAbsolutePath(),
                     "-out", f_tmp_file.getParent(),
                     "-c");
         } else {
-            r = ProcessHelper.procExec(env.VDTPath,
+            r = ProcessHelper.procExec(env.VDTPath, procEnv,
                     "-in", new File(InputFile).getAbsolutePath(),
                     "-out", f_tmp_file.getParent(),
                     "-c",
@@ -67,7 +71,7 @@ public class VectorToAndroidConverter extends AbstractConverter {
                     "-heightDp", Integer.toString(OutputHeight));
         }
 
-        if (r.Item1 != 0)  throw new Exception("vd-tool failed: \n\n" + r.Item1 + "\n\n" + r.Item2 + "\n\n" + r.Item3);
+        if (r.Item1 != 0)  throw new Exception("vd-tool failed: \n[ExitCode]\n" + r.Item1 + "\n\n[StdOut]\n" + r.Item2 + "\n\n[StdErr]\n" + r.Item3);
 
         String xnew = FileIO.readUTF8TextFile(f_tmp_file);
         if (!xnew.contains("<vector")) throw new Exception("vd-tool resulted in invalid output:\n" + xnew);
