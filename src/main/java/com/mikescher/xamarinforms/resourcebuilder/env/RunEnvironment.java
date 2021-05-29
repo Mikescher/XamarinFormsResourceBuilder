@@ -58,7 +58,7 @@ public class RunEnvironment
                 : "Unset";
 
         String home = System.getenv("JAVA_ORACLE_HOME");
-        if (!home.equals("")) {
+        if (home != null && !home.equals("")) {
             JavaHomeOverride = home;
             System.out.println("[#] Set VDT JAVA_HOME to '"+JavaHomeOverride+"'");
         }

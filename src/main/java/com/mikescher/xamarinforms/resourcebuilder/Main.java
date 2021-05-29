@@ -35,6 +35,8 @@ public class Main {
 
         env.Init(fXmlFile.getAbsoluteFile().getParent(), root);
 
+        System.out.println();
+
         NodeList fileNodes = root.getElementsByTagName("file");
         for (int i = 0; i < fileNodes.getLength(); i++)
         {
